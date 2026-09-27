@@ -1,6 +1,6 @@
 # Pool Party Personality
 
-A mobile-first party game for a university house party. Guests scan a QR code, fill in a short profile, answer **16 personality questions (15 sliders and a New York/California choice), plus a bonus BBQ grocery-cost guess** about fries, robots, Irish exits and questionable money decisions, review their answers, and get an automatically assigned **party type** (Ghost, Life of the Party, Chameleon, Drinking Machine, Game Goblin, Side Quest, Observer, Kitchen NPC). Then they can see who they align with and who they'd fight over the aux with. Clicking a guest's avatar explains their party type.
+A mobile-first party game for a university house party. Guests scan a QR code, fill in a short profile, answer **15 personality questions (14 sliders and a New York/California choice), plus a bonus BBQ grocery-cost guess** about fries, robots, Irish exits and questionable money decisions, review their answers, and get an automatically assigned **party type** (Ghost, Life of the Party, Chameleon, Drinking Machine, Game Goblin, Side Quest, Kitchen NPC). Then they can see who they align with and who they'd fight over the aux with. Clicking a guest's avatar explains their party type.
 
 Everything is a private directory for guests only: `noindex`, `robots.txt` disallow, and guest data endpoints require a participant cookie; organizer endpoints require an admin session.
 
@@ -9,7 +9,7 @@ Everything is a private directory for guests only: `noindex`, `robots.txt` disal
 1. Scan the organizer's QR code or open the party link on your phone.
 2. Enter your name, email and phone number. These are saved when you submit the join form, so organizers can follow up about payments or lost items even if you don't finish the quiz. University is optional: choose CMU and search for your degree, or choose Other and type your university.
 3. Enable **Keep my phone and email organizer-only** if you don't want other guests to see your contact details. Organizers still have access. Accept the notice and start the quiz.
-4. Answer the 16 questions. Use **Back** as needed, then review and edit your answers. Nothing is final until **Submit permanently & reveal**. After submission, only an organizer can reset the quiz.
+4. Answer the 15 questions. Use **Back** as needed, then review and edit your answers. Nothing is final until **Submit permanently & reveal**. After submission, only an organizer can reset the quiz.
 5. Explore the tabs: **Me** shows your party type and matches; **People** lets you compare answers with guests; **Opinions** shows the room's takes; **Announcements** shows organizer updates and polls. Tap any avatar to learn what it means.
 6. Vote once per poll; selecting a different option changes your vote until voting closes. You can edit your contact details and privacy choice from **Me → Edit profile** without retaking the quiz.
 
@@ -105,17 +105,18 @@ Vercel deployments require Supabase; the app refuses to collect attendee details
 
 - **Flow**: `/` welcome → `/join` profile (one CMU/Other university choice; CMU shows a searchable, emoji-labeled degree picker, Other accepts a university name) → `/quiz` (15 sliders, a New York/California choice, and final answer review) → `/reveal` → tabs `/me`, `/people`, `/opinions`, `/announcements`.
 - **Session**: a random token is stored in an httpOnly cookie; only its SHA-256 hash is stored server-side. Refreshing keeps the session. The quiz cannot be retaken unless the organizer resets it from `/admin`.
-- **Quiz**: slider movement is purely local. The draft is saved to `localStorage` on release/advance. Guests can go Back or edit any answer from the final review. Only the explicit “Submit permanently & reveal” action sends all 16 answers in one `POST /api/me/answers`, where the avatar is computed and stored. Submitted answers cannot be edited by guests.
+- **Quiz**: slider movement is purely local. The draft is saved to `localStorage` on release/advance. Guests can go Back or edit any answer from the final review. Only the explicit “Submit permanently & reveal” action sends all 15 answers in one `POST /api/me/answers`, where the avatar is computed and stored. Submitted answers cannot be edited by guests.
 - **Avatar summaries**: click an avatar on results, guest cards, comparisons, or the reveal to open its explanation. The summary starts with “You took the test…” for yourself or the guest's name for someone else. The dialog supports keyboard focus, Escape, and closing without navigation.
-- **Money sliders** (`assistant_pay`, `assistant_salary`, `phone_price`) map the 0–100 position onto nonlinear dollar stops; the stored `display_value` is the dollar string, and compatibility always compares normalized positions.
-- **Avatars** (`src/lib/avatars.ts`): 16 answers → lightweight dimensions (`src/lib/dimensions.ts`) → weighted score per avatar → highest wins with a fixed tie-break order. No randomness; identical answers always produce the same type.
-- **Compatibility** (`src/lib/compatibility.ts`): mean of `1 − |a − b| / 100` across all 16 questions. Also derives closest takes, biggest disagreements, money gaps and templated conversation starters.
+- **Money sliders** (`assistant_pay`, `assistant_salary`) map the 0–100 position onto nonlinear dollar stops; the stored `display_value` is the dollar string, and compatibility always compares normalized positions.
+- **Avatars** (`src/lib/avatars.ts`): 15 answers → lightweight dimensions (`src/lib/dimensions.ts`) → weighted score per avatar → highest wins with a fixed tie-break order. No randomness; identical answers always produce the same type. Seven outcomes are available; Observer is retired from new results, but previously saved Observer profiles still display normally.
+- **Updated questions**: dancing ability replaces the phone-free year, and tonight's alcohol plans replace petty revenge. The AI delegation question has been removed. Zero drinks is explicitly welcome. These use new question IDs, so old answers are never interpreted as answers to the replacements. Saved drafts return to the replacement questions. Completed quizzes stay unchanged; an organizer can reset a quiz if the attendee wants to answer the new version. No database migration is needed.
+- **Compatibility** (`src/lib/compatibility.ts`): mean of `1 − |a − b| / 100` across all 15 questions. Also derives closest takes, biggest disagreements, money gaps and templated conversation starters.
 - **Data loading**: one `GET /api/party` returns the viewer plus every guest and their answers. Compatibility for every card is computed once per refresh in a memoized map on the device; the tabs layout also server-renders the initial payload so there's no loading flash.
 
 ## Project layout
 
 ```
-src/lib/questions.ts        the 16 questions: labels, live captions, party captions, templates
+src/lib/questions.ts        the 15 questions: labels, live captions, party captions, templates
 src/lib/money.ts            nonlinear money slider mapping + formatting
 src/lib/dimensions.ts       party dimensions from answers
 src/lib/avatars.ts          avatar metadata + deterministic assignment
@@ -134,11 +135,11 @@ supabase/migrations/        upgrades for existing Supabase projects
 
 ## Announcements and voting
 
-The quiz ends with a separate **BBQ grocery-cost guessing round** after the 16 personality questions. Guests enter a dollar amount, review/edit it, and submit it with their quiz. Closest guess wins a reward; furthest guess gets a playful forfeit. It does not affect avatars, observations, compatibility, or opinion statistics. Guesses are private to the attendee and organizers, appear in the admin participant list, and export as `grocery_cost_guess`. Organizers compare guesses against their receipt and announce the outcome manually; there is no automatic reward/forfeit selection. The bonus uses the existing answers table, so no new database migration is needed.
+The quiz ends with a separate **BBQ grocery-cost guessing round** after the 15 personality questions. Guests enter a dollar amount, review/edit it, and submit it with their quiz. Closest guess wins a reward; furthest guess gets a playful forfeit. It does not affect avatars, observations, compatibility, or opinion statistics. Guesses are private to the attendee and organizers, appear in the admin participant list, and export as `grocery_cost_guess`. Organizers compare guesses against their receipt and announce the outcome manually; there is no automatic reward/forfeit selection. The bonus uses the existing answers table, so no new database migration is needed.
 
 Open `/admin`, sign in with `ADMIN_PASSWORD`, and use **Announcements** at the top of the control room. Enter a title and message, optionally enable **Include a vote**, enter 2–4 unique options, and post. Guests see updates in the **Announcements** tab; it refreshes every 30 seconds and on window focus. Messages are in-app only (no SMS, email, or push delivery).
 
-Each guest has one vote per poll and may change it until the organizer selects **Close voting**. Results show totals and the viewer's own selection, never a list of voters. Closing a poll is permanent. Existing posts cannot yet be edited or deleted through the UI.
+Each guest has one vote per poll and may change it until the organizer selects **Close voting**. Results show totals and the viewer's own selection, never a list of voters. Closing a poll is permanent. Organizers can select **Delete announcement** on any post in `/admin` and confirm to permanently remove it and all its votes. Guests see the removal on the next refresh. Posts cannot be edited.
 
 ### Existing Supabase installations
 
@@ -156,7 +157,7 @@ The CMU picker uses `emoji ACRONYM [Full degree name]`, with search by degree, a
 
 1. Start with `npm run dev` and open http://localhost:4817.
 2. Join, enable organizer-only contact, choose CMU and search for your degree.
-3. Complete the quiz: question 9 requires New York or California. Review and edit before submitting.
+3. Complete the quiz: question 8 requires New York or California. Review and edit before submitting.
 4. In another browser/private session, join as a second guest; the first guest's contact card should be hidden.
 5. Open `/admin`, post a message with a two-option poll, and visit **Announcements** as a guest. Vote twice for different options: the total stays at one. Close voting in admin and verify the guest can no longer vote.
 6. `npm test`, `npm run lint`, and `npm run typecheck` run the automated checks. If this environment cannot run Turbopack, use `npm run build -- --webpack`.

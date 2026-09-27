@@ -45,9 +45,7 @@ export default function MePage() {
           p,
           diff: m.diff,
           text:
-            m.question.id === "phone_price"
-              ? `You'd give up your phone for ${mine}. ${p.firstName} requires ${theirs}.`
-              : m.question.id === "assistant_pay"
+            m.question.id === "assistant_pay"
                 ? `You'd pay ${mine} for a personal assistant. ${p.firstName} would pay ${theirs}.`
                 : `You'd need ${mine} to be someone's assistant. ${p.firstName} needs ${theirs}.`,
         };

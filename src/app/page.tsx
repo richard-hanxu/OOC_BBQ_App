@@ -20,8 +20,8 @@ export default async function WelcomePage() {
           <span className="grad-text">OOC BBQ!</span>
         </h1>
         <p className="mt-5 max-w-sm text-balance text-lg text-white/80">
-          Hosted by <HostProfile host={HOSTS.richard} />, <HostProfile host={HOSTS.andrew} />, <HostProfile host={HOSTS.sunny} /> and <HostProfile host={HOSTS.muyang} />
-          {" "}Enter your contact info and answer a few icebreaker questions!
+          Hosted by <HostProfile host={HOSTS.richard} />, <HostProfile host={HOSTS.andrew} />, <HostProfile host={HOSTS.sunny} /> and <HostProfile host={HOSTS.muyang} />.
+          {" "}Record your arrival and answer a few icebreaker questions!
         </p>
         <p className="mt-5 max-w-sm text-balance text-lg text-white/80">
           Yes, this was vibe-coded lol

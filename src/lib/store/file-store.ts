@@ -74,6 +74,15 @@ export class FileStore implements Store {
     return clone(announcement);
   }
 
+  async deleteAnnouncement(id: string) {
+    const data = await this.load();
+    const index = data.announcements.findIndex((item) => item.id === id);
+    if (index === -1) return false;
+    data.announcements.splice(index, 1);
+    await this.persist();
+    return true;
+  }
+
   async closeAnnouncement(id: string) {
     const record = (await this.load()).announcements.find((item) => item.id === id);
     if (!record) return false;

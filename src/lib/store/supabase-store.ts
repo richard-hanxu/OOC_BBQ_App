@@ -100,6 +100,13 @@ export class SupabaseStore implements Store {
     return { id: data.id, title: data.title, body: data.body, createdAt: data.created_at, closed: data.closed, options, votes: [] };
   }
 
+  async deleteAnnouncement(id: string) {
+    // The announcement_votes foreign key cascades deletion to its votes.
+    const { data, error } = await this.client.from("announcements").delete().eq("id", id).select("id");
+    if (error) throw error;
+    return Boolean(data?.length);
+  }
+
   async closeAnnouncement(id: string) {
     const { data, error } = await this.client.from("announcements").update({ closed: true }).eq("id", id).select("id");
     if (error) throw error;

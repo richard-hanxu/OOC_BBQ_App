@@ -63,7 +63,6 @@ export function computeDimensions(a: AnswerMap): Dimensions {
     [get(a, "smart_button"), 1],
     [get(a, "irish_exit"), 1],
     [get(a, "fry"), 1],
-    [get(a, "revenge"), 1],
   ]);
   const chaos = chaosRaw * 0.8 + extremity * 0.2;
 
@@ -78,7 +77,6 @@ export function computeDimensions(a: AnswerMap): Dimensions {
     [get(a, "move_help"), 0.25],
     [inv(get(a, "irish_exit")), 0.1],
     [inv(get(a, "fry")), 0.075],
-    [inv(get(a, "revenge")), 0.075],
   ]);
 
   const loyalty = weighted([
@@ -86,9 +84,9 @@ export function computeDimensions(a: AnswerMap): Dimensions {
     [get(a, "honesty"), 0.25],
   ]);
 
-  const techDelegation = mean([get(a, "ai"), get(a, "robot")]);
+  const techDelegation = get(a, "robot");
   const luxury = get(a, "assistant_pay");
-  const independencePrice = mean([get(a, "assistant_salary"), get(a, "phone_price")]);
+  const independencePrice = get(a, "assistant_salary");
 
   const boundaryRespect = inv(get(a, "fry"));
 
@@ -96,24 +94,23 @@ export function computeDimensions(a: AnswerMap): Dimensions {
     [inv(get(a, "fry")), 1],
     [inv(get(a, "irish_exit")), 1],
     [get(a, "floor_money"), 1],
-    [inv(get(a, "revenge")), 0.6],
   ]);
 
   const confidence = weighted([
+    [get(a, "dancing_ability"), 0.5],
     [get(a, "honesty"), 1],
     [get(a, "aux"), 1],
     [get(a, "assistant_salary"), 1],
   ]);
 
   const competitiveness = weighted([
-    [get(a, "revenge"), 0.4],
     [get(a, "smart_button"), 0.3],
     [get(a, "honesty"), 0.3],
   ]);
 
   const lowStakesOpinions =
     (mean(
-      (["fry", "aux", "irish_exit", "revenge", "floor_money", "vacation_destination"] as QuestionId[]).map((id) =>
+      (["fry", "aux", "irish_exit", "floor_money", "vacation_destination"] as QuestionId[]).map((id) =>
         Math.abs(get(a, id) - 50),
       ),
     ) /

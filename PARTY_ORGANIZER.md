@@ -75,7 +75,9 @@ Attendees who have completed the quiz can read it in their **Announcements** tab
 
 Each attendee has one vote per poll and can change their selection while voting is open. The app shows aggregate results and a guest's own selection, not a public list of who voted for what. Closing is permanent in the app; results remain visible. Posting, closing, and viewing organizer controls require organizer login.
 
-The app does not currently provide editing/deleting announcements or reopening polls. For a correction, post a follow-up message; for a replacement poll, close the old poll and create a new one. Raw vote records exist in the database and are accessible to database administrators, so do not describe voting as anonymous from database owners.
+To remove a post, select **Delete announcement** below it in the organizer announcement board and confirm. This works for plain messages and open or closed polls. Deletion permanently removes the announcement and all its votes; there is no undo. Export or back up any results you need first. Guests see the removal when their board refreshes (automatically every 30 seconds).
+
+The app does not currently provide editing announcements or reopening polls. For a correction, post a follow-up message or delete and replace the original. Raw vote records exist in the database and are accessible to database administrators, so do not describe voting as anonymous from database owners.
 
 ## Manage attendees
 

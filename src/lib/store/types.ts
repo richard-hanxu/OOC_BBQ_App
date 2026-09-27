@@ -14,6 +14,7 @@ export interface Store {
   listAnnouncements(): Promise<AnnouncementRecord[]>;
   createAnnouncement(input: AnnouncementInput): Promise<AnnouncementRecord>;
   closeAnnouncement(id: string): Promise<boolean>;
+  deleteAnnouncement(id: string): Promise<boolean>;
   vote(announcementId: string, participantId: string, optionId: string): Promise<VoteResult>;
   listParticipants(): Promise<Participant[]>;
   getParticipant(id: string): Promise<Participant | null>;

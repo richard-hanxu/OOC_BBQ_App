@@ -19,7 +19,37 @@ const TOTAL_STEPS = QUESTION_COUNT + 1;
 function readDraft(): Draft | null {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
-    const draft = raw ? (JSON.parse(raw) as Draft) : null;
+    let draft = raw ? (JSON.parse(raw) as Draft) : null;
+    if (draft?.answers && "ai" in draft.answers) {
+      const { ai: _retired, ...answers } = draft.answers;
+      void _retired;
+      draft = {
+        ...draft,
+        answers,
+        index: draft.index > 6 ? draft.index - 1 : draft.index,
+        touched: draft.touched.filter((id) => id in QUESTION_BY_ID),
+      };
+    }
+    if (draft?.answers && "revenge" in draft.answers) {
+      const { revenge: _retired, ...answers } = draft.answers;
+      void _retired;
+      draft = {
+        ...draft,
+        answers,
+        index: Math.min(draft.index, QUESTIONS.findIndex((q) => q.id === "alcohol_plans")),
+        touched: draft.touched.filter((id) => id in QUESTION_BY_ID),
+      };
+    }
+    if (draft?.answers && "phone_price" in draft.answers) {
+      const { phone_price: _retired, ...answers } = draft.answers;
+      void _retired;
+      draft = {
+        ...draft,
+        answers,
+        index: Math.min(draft.index, QUESTIONS.findIndex((q) => q.id === "dancing_ability")),
+        touched: draft.touched.filter((id) => id in QUESTION_BY_ID),
+      };
+    }
     if (draft?.answers && ("drink_pressure" in draft.answers || "vacation_season" in draft.answers)) {
       // A response to the retired question is not a vacation preference.
       const { drink_pressure: _retired, vacation_season: _season, ...answers } = draft.answers as Draft["answers"] & { drink_pressure?: unknown; vacation_season?: unknown };

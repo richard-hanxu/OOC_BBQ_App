@@ -42,7 +42,7 @@ export function AnnouncementBoard({ organizer = false }: { organizer?: boolean }
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "Couldn't save that. Try again.");
       await load();
-      setNotice(key === "post" ? "Announcement posted!" : method === "PATCH" ? "Voting is now closed." : "Your vote is saved.");
+      setNotice(key === "post" ? "Announcement posted!" : method === "DELETE" ? "Announcement and any votes deleted." : method === "PATCH" ? "Voting is now closed." : "Your vote is saved.");
       return true;
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn't reach the party server."); return false; }
     finally { setBusy(null); }
@@ -98,6 +98,11 @@ export function AnnouncementBoard({ organizer = false }: { organizer?: boolean }
         {!organizer && !item.closed && <p className="text-xs text-muted-foreground">{busy === item.id ? "Saving your vote…" : "You can change your vote until voting closes. Only totals are shared."}</p>}
         {organizer && !item.closed && <button disabled={busy !== null} type="button" onClick={() => { if (confirm("Close voting? Guests will still see the results, but cannot change their vote.")) void mutate(item.id, `/api/admin/announcements/${item.id}`, "PATCH"); }} className="min-h-11 rounded-full bg-white/10 px-4 text-xs font-bold disabled:opacity-50">Close voting</button>}
       </div>}
+      {organizer && <button disabled={busy !== null} type="button" aria-label={`Delete announcement: ${item.title}`}
+        onClick={() => { if (confirm(`Delete “${item.title}”? This permanently removes the announcement and all its votes. This cannot be undone.`)) void mutate(`delete:${item.id}`, `/api/admin/announcements/${item.id}`, "DELETE"); }}
+        className="min-h-11 rounded-full border border-red-400/30 bg-red-400/10 px-4 text-xs font-bold text-red-300 transition-colors hover:bg-red-400/20 disabled:opacity-50">
+        {busy === `delete:${item.id}` ? "Deleting…" : "Delete announcement"}
+      </button>}
     </Card>)}
     <p className="text-center text-xs text-muted-foreground">Updates automatically every 30 seconds.</p>
   </section>;

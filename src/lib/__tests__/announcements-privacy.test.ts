@@ -78,6 +78,20 @@ describe("optional food and supplies", () => {
 });
 
 describe("announcements and polls", () => {
+  it.each(["message", "open poll", "closed poll"])("permanently deletes a %s while preserving other records", async (kind) => {
+    const keep = await store.createAnnouncement({ title: "Keep me", body: "Still here", options: [] });
+    const removed = await store.createAnnouncement({ title: "Remove me", body: "Update", options: kind === "message" ? [] : ["Yes", "No"] });
+    if (removed.options.length) await store.vote(removed.id, participant.id, removed.options[0].id);
+    if (kind === "closed poll") await store.closeAnnouncement(removed.id);
+    expect(await store.deleteAnnouncement(removed.id)).toBe(true);
+    const reloaded = new FileStore(path.join(directory, "data.json"));
+    expect(await reloaded.listAnnouncements()).toEqual([keep]);
+    expect(await reloaded.getParticipant(participant.id)).not.toBeNull();
+    expect(await reloaded.vote(removed.id, participant.id, removed.options[0]?.id ?? "fake")).toBe("not-found");
+    expect(await reloaded.deleteAnnouncement(removed.id)).toBe(false);
+    expect(await reloaded.listAnnouncements()).toEqual([keep]);
+  });
+
   it("accepts a plain announcement or two to four unique options", () => {
     expect(validateAnnouncement({ title: " Hi ", body: " Everyone " })).toEqual({ title: "Hi", body: "Everyone", options: [] });
     for (const count of [2, 3, 4]) expect(validateAnnouncement({ title: "Vote", body: "Pick", options: Array.from({ length: count }, (_, i) => String(i)) }).options).toHaveLength(count);

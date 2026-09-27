@@ -7,14 +7,13 @@ export type QuestionId =
   | "aux"
   | "honesty"
   | "fry"
-  | "ai"
   | "irish_exit"
   | "vacation_destination"
   | "smart_button"
   | "move_help"
-  | "phone_price"
+  | "dancing_ability"
   | "robot"
-  | "revenge"
+  | "alcohol_plans"
   | "history_sharing"
   | "song_lyrics";
 
@@ -153,7 +152,7 @@ export const QUESTIONS: Question[] = [
       low: "Would be someone's assistant for suspiciously little.",
       high: "Charges a small fortune to answer someone else's emails.",
     },
-    avatarWeights: { independencePrice: 0.5, confidence: 0.33 },
+    avatarWeights: { independencePrice: 1, confidence: 0.33 },
     conversationTemplate: (hi, lo) =>
       `${hi.name} ${v(hi, "wants", "want")} a fortune to be someone's assistant. ${lo.name} ${v(lo, "is", "are")} basically available now.`,
     moneyGapTemplate: (hi) =>
@@ -251,37 +250,6 @@ export const QUESTIONS: Question[] = [
     avatarWeights: { chaos: 0.2, minorNormConcern: 0.33, boundaryRespect: 0.3 },
     conversationTemplate: (hi, lo) =>
       `You two need to discuss fry ownership. ${hi.name} ${v(hi, "thinks", "think")} fries are communal. ${lo.name} ${v(lo, "considers", "consider")} it a war crime.`,
-  },
-  {
-    id: "ai",
-    category: "Tech",
-    shortTitle: "AI delegation",
-    text: "How much of your life would you let a highly capable AI handle for you?",
-    leftLabel: "Set a timer, maybe",
-    rightLabel: "Here's my email, calendar, taxes, and life plan",
-    type: "continuous_slider",
-    descriptors: [
-      "Set a timer. Maybe. Supervised.",
-      "Draft the email, I'll hit send.",
-      "Calendar and errands, nothing important.",
-      "Taxes too. What's the worst that could happen?",
-      "Here's my email, calendar, taxes, and life plan.",
-    ],
-    partyCaptions: [
-      "The AI here is allowed to set timers. That's it.",
-      "AI can draft, humans hit send.",
-      "AI handles the boring half of life here.",
-      "This party has quietly handed over the taxes.",
-      "The AI is running this party's lives. Nobody minds.",
-    ],
-    moods: ["⏲️", "✍️", "📆", "🧾", "🤖"],
-    observations: {
-      low: "AI gets limited permissions.",
-      high: "Would hand an AI the entire life plan.",
-    },
-    avatarWeights: { techDelegation: 0.5 },
-    conversationTemplate: (hi, lo) =>
-      `${hi.name} would let an AI run ${hi.you ? "your" : "their"} entire life. ${lo.name} ${v(lo, "lets", "let")} it set a timer, supervised.`,
   },
   {
     id: "irish_exit",
@@ -408,37 +376,35 @@ export const QUESTIONS: Question[] = [
       `${lo.name} apparently ${v(lo, "considers", "consider")} skipping an 8 AM moving appointment morally acceptable. ${hi.name} ${v(hi, "is", "are")} bringing boxes.`,
   },
   {
-    id: "phone_price",
-    category: "Money",
-    shortTitle: "Phone-free year",
-    text: "How much money would someone have to pay you to give up your smartphone for one full year?",
-    leftLabel: "Honestly, take it",
-    rightLabel: "My phone is apparently priceless",
-    type: "money_slider",
-    stops: [0, 1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000],
+    id: "dancing_ability",
+    category: "Dance floor",
+    shortTitle: "Dancing ability",
+    text: "Your favorite song comes on at the BBQ. How would you rate your dancing skills?",
+    leftLabel: "Two left feet",
+    rightLabel: "Basically the backup dancer",
+    type: "continuous_slider",
     descriptors: [
-      "Honestly, take it. Free me.",
-      "A decent vacation's worth.",
-      "I'd need real compensation for the group chats.",
-      "This is a life-altering amount.",
-      "My phone is apparently priceless.",
+      "My feet have never met the beat.",
+      "A reliable side-to-side shuffle.",
+      "A few moves. Strong commitment.",
+      "I've got moves and witnesses.",
+      "The music video is missing its lead dancer.",
     ],
     partyCaptions: [
-      "This party would hand over their phones for a sandwich.",
-      "Phones are worth about one vacation here.",
-      "Losing the group chat is priced like a small car.",
-      "This party is very attached to its notifications.",
-      "Nobody here is giving up their phone. Ever.",
+      "The beat and this crowd are still getting acquainted.",
+      "The side-to-side shuffle is the house specialty.",
+      "A few moves and a lot of enthusiasm.",
+      "This BBQ comes with a dance crew.",
+      "Someone book this crowd for a music video.",
     ],
-    moods: ["🕊️", "🏝️", "💬", "💸", "📱"],
+    moods: ["🦶", "😅", "🎶", "🕺", "🪩"],
     observations: {
-      low: "Would give up the phone for pocket change.",
-      high: "Values the phone like a house.",
+      low: "Brings two left feet and plenty of spirit.",
+      high: "Could turn the BBQ into a music video.",
     },
-    avatarWeights: { independencePrice: 0.5 },
+    avatarWeights: { confidence: 0.5 },
     conversationTemplate: (hi, lo) =>
-      `${hi.name} ${v(hi, "needs", "need")} a fortune to give up ${hi.you ? "your" : "their"} phone for a year. ${lo.name} would do it for a nice weekend.`,
-    moneyGapTemplate: () => "One of you is much more attached.",
+      `${hi.name} ${v(hi, "has", "have")} the dance moves. ${lo.name} ${v(lo, "brings", "bring")} the enthusiastic shuffle. Time for a dance lesson?`,
   },
   {
     id: "robot",
@@ -467,40 +433,40 @@ export const QUESTIONS: Question[] = [
       low: "Would barely let a robot inside.",
       high: "Would hand a humanoid robot the house keys.",
     },
-    avatarWeights: { techDelegation: 0.5 },
+    avatarWeights: { techDelegation: 1 },
     conversationTemplate: (hi, lo) =>
       `${hi.name} would hand a humanoid robot the house keys. ${lo.name} would barely let it inside.`,
   },
   {
-    id: "revenge",
-    category: "Petty conflict",
-    shortTitle: "Petty revenge",
-    text: "A friend eats the food you specifically told them you were saving. How justified are you in doing something petty in return?",
-    leftLabel: "Forgive and forget",
-    rightLabel: "This requires consequences",
+    id: "alcohol_plans",
+    category: "Tonight's plans",
+    shortTitle: "Drinks tonight",
+    text: "How much alcohol are you planning to drink tonight? No pressure—zero drinks is always welcome!",
+    leftLabel: "None—zero drinks is welcome",
+    rightLabel: "Several drinks over the evening",
     type: "continuous_slider",
     descriptors: [
-      "Peace was always an option.",
-      "I'm annoyed.",
-      "Noted for future reference.",
-      "Justice will be proportional.",
-      "They started this.",
+      "Zero or almost none. Here for the BBQ.",
+      "Maybe one, mostly sipping something soft.",
+      "A couple, taking my time.",
+      "A few across the evening, at my own pace.",
+      "Several over the evening. No drinking contest required.",
     ],
     partyCaptions: [
-      "A forgiving crowd. Your leftovers are not safe, though.",
-      "People will be annoyed. Quietly.",
-      "Everything is being noted for future reference.",
-      "Justice at this party is proportional.",
-      "Label your food. Consequences are real here.",
+      "Soft drinks and BBQ are the main event tonight.",
+      "This crowd is planning a light sipping kind of night.",
+      "A couple of drinks is the middle-of-the-room plan.",
+      "A few drinks across the evening is the room's plan.",
+      "Several drinks are on the agenda. Nobody needs to keep up.",
     ],
-    moods: ["🕊️", "😒", "📝", "⚖️", "😈"],
+    moods: ["🧃", "🥤", "🍹", "🥂", "🌙"],
     observations: {
-      low: "Forgives food theft instantly. Suspicious.",
-      high: "Believes petty revenge is justice.",
+      low: "Here for the BBQ; alcohol is optional.",
+      high: "Plans to sip through the evening, at their own pace.",
     },
-    avatarWeights: { chaos: 0.2, competitiveness: 0.4, minorNormConcern: 0.2 },
+    avatarWeights: { drinkingMachine: 1.2 },
     conversationTemplate: (hi, lo) =>
-      `One of you believes petty revenge is justice. (It's ${hi.you ? "you" : hi.name}.) ${lo.name} ${v(lo, "would", "would")} forgive and forget.`,
+      `${hi.name} ${v(hi, "plans", "plan")} on more drinks tonight; ${lo.name} ${v(lo, "is", "are")} keeping it lighter. Different drinks, same BBQ.`,
   },
   {
     id: "history_sharing",

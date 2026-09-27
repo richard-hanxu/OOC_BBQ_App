@@ -3,13 +3,13 @@ import { seedInputs } from "../seed";
 import type { Participant } from "../types";
 import { QUESTIONS } from "../questions";
 
-const mocks = vi.hoisted(() => ({ admin: vi.fn(), participant: vi.fn(), store: { listParticipants: vi.fn(), listAnnouncements: vi.fn(), createAnnouncement: vi.fn(), closeAnnouncement: vi.fn(), vote: vi.fn(), saveAnswers: vi.fn() } }));
+const mocks = vi.hoisted(() => ({ admin: vi.fn(), participant: vi.fn(), store: { listParticipants: vi.fn(), listAnnouncements: vi.fn(), createAnnouncement: vi.fn(), closeAnnouncement: vi.fn(), deleteAnnouncement: vi.fn(), vote: vi.fn(), saveAnswers: vi.fn() } }));
 vi.mock("@/lib/server/auth", () => ({ isAdmin: mocks.admin, currentParticipant: mocks.participant }));
 vi.mock("@/lib/store", () => ({ getStore: async () => mocks.store }));
 import { GET as party } from "@/app/api/party/route";
 import { GET as announcements } from "@/app/api/announcements/route";
 import { POST as post, GET as adminList } from "@/app/api/admin/announcements/route";
-import { PATCH as close } from "@/app/api/admin/announcements/[id]/route";
+import { PATCH as close, DELETE as deleteAnnouncement } from "@/app/api/admin/announcements/[id]/route";
 import { POST as vote } from "@/app/api/announcements/[id]/vote/route";
 import { POST as submitQuiz } from "@/app/api/me/answers/route";
 import { GET as exportContacts } from "@/app/api/admin/export/route";
@@ -22,6 +22,32 @@ const guest: Participant = { ...input, id, createdAt: "2026-09-27", avatarType: 
 beforeEach(() => { vi.resetAllMocks(); mocks.admin.mockResolvedValue(false); mocks.participant.mockResolvedValue(null); });
 
 describe("authenticated party endpoints", () => {
+  it("blocks announcement deletion for anonymous users and attendees", async () => {
+    for (const viewer of [null, guest]) {
+      mocks.participant.mockResolvedValue(viewer);
+      expect((await deleteAnnouncement(new Request("http://localhost/api/test", { method: "DELETE" }), context)).status).toBe(401);
+    }
+    expect(mocks.store.deleteAnnouncement).not.toHaveBeenCalled();
+  });
+
+  it("lets organizers delete announcements and reports missing records", async () => {
+    mocks.admin.mockResolvedValue(true);
+    mocks.store.deleteAnnouncement.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const req = new Request("http://localhost/api/test", { method: "DELETE" });
+    const response = await deleteAnnouncement(req, context);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    expect(mocks.store.deleteAnnouncement).toHaveBeenCalledWith(id);
+    expect((await deleteAnnouncement(req, context)).status).toBe(404);
+  });
+
+  it("rejects malformed announcement deletion IDs without touching storage", async () => {
+    mocks.admin.mockResolvedValue(true);
+    const response = await deleteAnnouncement(new Request("http://localhost/api/test", { method: "DELETE" }), { params: Promise.resolve({ id: "invalid" }) });
+    expect(response.status).toBe(400);
+    expect(mocks.store.deleteAnnouncement).not.toHaveBeenCalled();
+  });
+
   it("stores different grocery guesses without changing the assigned personality or observations", async () => {
     mocks.participant.mockResolvedValue(guest);
     const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.type === "binary" ? 0 : 50]));
@@ -119,7 +145,7 @@ describe("authenticated party endpoints", () => {
   it("requires both new answers and persists their slider positions", async () => {
     mocks.participant.mockResolvedValue(guest);
     const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.type === "binary" ? 0 : 50]));
-    for (const id of ["history_sharing", "song_lyrics"]) {
+    for (const id of ["history_sharing", "song_lyrics", "dancing_ability", "alcohol_plans"]) {
       const incomplete = { ...answers }; delete incomplete[id];
       expect((await submitQuiz(request({ groceryGuess: 200, answers: incomplete }))).status).toBe(400);
     }
@@ -128,6 +154,6 @@ describe("authenticated party endpoints", () => {
     const saved = mocks.store.saveAnswers.mock.lastCall?.[1];
     expect(saved.history_sharing.normalized).toBe(20);
     expect(saved.song_lyrics.normalized).toBe(90);
-    expect(Object.keys(saved)).toHaveLength(17);
+    expect(Object.keys(saved)).toHaveLength(16);
   });
 });

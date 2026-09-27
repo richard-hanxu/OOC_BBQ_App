@@ -25,12 +25,14 @@ export interface AvatarMeta {
   plural: string;
 }
 
+/** Observer remains readable for legacy profiles but is no longer awarded. */
+export type ActiveAvatarType = Exclude<AvatarType, "observer">;
+
 /** Deterministic tie-break order: earlier wins. */
-export const AVATAR_ORDER: AvatarType[] = [
+export const AVATAR_ORDER: ActiveAvatarType[] = [
   "life_of_party",
   "ghost",
   "game_goblin",
-  "observer",
   "drinking_machine",
   "side_quest",
   "chameleon",
@@ -120,7 +122,7 @@ export const AVATARS: Record<AvatarType, AvatarMeta> = {
   },
 };
 
-export const ALL_AVATAR_TYPES = Object.keys(AVATARS) as AvatarType[];
+export const ALL_AVATAR_TYPES: ActiveAvatarType[] = [...AVATAR_ORDER];
 
 export function isAvatarType(x: unknown): x is AvatarType {
   return typeof x === "string" && x in AVATARS;
@@ -137,7 +139,7 @@ const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 /** Exponent > 1 makes a feature harder to satisfy; < 1 makes it easier. */
 const curve = (x: number, p: number) => Math.pow(clamp01(x), p);
 
-export type AvatarScores = Record<AvatarType, number>;
+export type AvatarScores = Record<ActiveAvatarType, number>;
 
 /**
  * Weighted, normalized (0..1) score per avatar. No randomness: identical
@@ -179,6 +181,7 @@ export function scoreAvatars(d: Dimensions, a: AnswerMap): AvatarScores {
   ]);
 
   const drinking_machine = avg([
+    [hi(g("alcohol_plans")), 1.2],
     [curve(hi(d.chaos), 0.8), 1.5],
     [curve(hi(d.socialEnergy), 0.8), 1],
     [curve(lo(d.minorNormConcern), 0.8), 1.2],
@@ -207,14 +210,6 @@ export function scoreAvatars(d: Dimensions, a: AnswerMap): AvatarScores {
     [hi(d.independencePrice), 0.4],
   ]);
 
-  const observer = avg([
-    [curve(hi(d.conscientiousness), 0.85), 1.3],
-    [curve(hi(d.boundaryRespect), 0.85), 1],
-    [curve(lo(d.intervention), 0.85), 1],
-    [curve(lo(d.chaos), 0.85), 1.2],
-    [lo(g("smart_button")), 0.4],
-  ]);
-
   const partial: Omit<AvatarScores, "kitchen_npc"> = {
     ghost,
     life_of_party,
@@ -222,7 +217,6 @@ export function scoreAvatars(d: Dimensions, a: AnswerMap): AvatarScores {
     drinking_machine,
     game_goblin,
     side_quest,
-    observer,
   };
   const maxOther = Math.max(...Object.values(partial));
 
@@ -252,8 +246,8 @@ function spread(xs: number[]) {
   return Math.sqrt(xs.reduce((p, c) => p + (c - m) ** 2, 0) / xs.length);
 }
 
-export function pickAvatar(scores: AvatarScores): AvatarType {
-  let best: AvatarType = AVATAR_ORDER[0];
+export function pickAvatar(scores: AvatarScores): ActiveAvatarType {
+  let best: ActiveAvatarType = AVATAR_ORDER[0];
   let bestScore = -1;
   for (const t of AVATAR_ORDER) {
     const s = Math.round(scores[t] * 10000) / 10000;

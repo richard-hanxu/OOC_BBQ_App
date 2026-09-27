@@ -12,8 +12,17 @@ import { isCmu, schoolLine } from "../types";
 const uniform = (v: number): AnswerMap => Object.fromEntries(QUESTIONS.map((q) => [q.id, v])) as AnswerMap;
 
 describe("questions", () => {
-  it("has exactly 16 questions, all with 5 descriptors", () => {
-    expect(QUESTIONS).toHaveLength(16);
+  it("replaces the retired questions with dancing and tonight's drink plans", () => {
+    expect(QUESTIONS[10].id).toBe("dancing_ability");
+    expect(QUESTIONS[12].id).toBe("alcohol_plans");
+    expect(QUESTIONS.map((q) => q.id)).not.toContain("phone_price");
+    expect(QUESTIONS.map((q) => q.id)).not.toContain("revenge");
+    expect(QUESTIONS.map((q) => q.id)).not.toContain("ai");
+    expect(QUESTION_BY_ID.dancing_ability.type).toBe("continuous_slider");
+    expect(QUESTION_BY_ID.alcohol_plans.text).toContain("zero drinks is always welcome");
+  });
+  it("has exactly 15 questions, all with 5 descriptors", () => {
+    expect(QUESTIONS).toHaveLength(15);
     for (const q of QUESTIONS) {
       expect(q.descriptors).toHaveLength(5);
       expect(q.partyCaptions).toHaveLength(5);
@@ -32,7 +41,7 @@ describe("questions", () => {
     expect(rangeIndex(100)).toBe(4);
     expect(descriptorFor(QUESTION_BY_ID.fry, 5)).toBe("War crime.");
     expect(descriptorFor(QUESTION_BY_ID.fry, 95)).toBe("Those fries belong to the people.");
-    expect(descriptorFor(QUESTION_BY_ID.revenge, 100)).toBe("They started this.");
+    expect(descriptorFor(QUESTION_BY_ID.alcohol_plans, 0)).toBe("Zero or almost none. Here for the BBQ.");
   });
 });
 
@@ -50,7 +59,7 @@ describe("money sliders", () => {
   });
   it("formats with unit and plus sign at the top", () => {
     expect(moneyDisplay(pay, 100)).toBe("$100,000+/year");
-    expect(moneyDisplay(QUESTION_BY_ID.phone_price, 0)).toBe("$0");
+    expect(moneyDisplay(pay, 0)).toBe("$0/year");
     expect(moneyDisplay(QUESTION_BY_ID.assistant_salary, 100)).toBe("$1,000,000+/year");
     expect(formatMoney(250000, { compact: true })).toBe("$250k");
     expect(formatMoney(1000000, { compact: true })).toBe("$1M");
@@ -58,6 +67,34 @@ describe("money sliders", () => {
 });
 
 describe("avatar assignment", () => {
+  it("ignores retired AI delegation answers in scoring", () => {
+    const answers = uniform(50);
+    expect(assignAvatar({ ...answers, ai: 100 } as AnswerMap)).toEqual(assignAvatar(answers));
+  });
+  it("never offers or scores Observer for new results", () => {
+    expect(ALL_AVATAR_TYPES).toHaveLength(7);
+    expect(ALL_AVATAR_TYPES).not.toContain("observer");
+    for (const p of SEED_PEOPLE) {
+      const result = assignAvatar(p.answers);
+      expect(result.type).not.toBe("observer");
+      expect(result.scores).not.toHaveProperty("observer");
+    }
+    const scores = Object.fromEntries(ALL_AVATAR_TYPES.map((t) => [t, 0.5])) as ReturnType<typeof scoreAvatars>;
+    expect(pickAvatar({ ...scores, observer: 999 } as typeof scores)).not.toBe("observer");
+  });
+
+  it("uses dancing for confidence and drinks for party style, not moral judgments", () => {
+    const lowDance = computeDimensions({ ...uniform(50), dancing_ability: 0 });
+    const highDance = computeDimensions({ ...uniform(50), dancing_ability: 100 });
+    expect(highDance.confidence).toBeGreaterThan(lowDance.confidence);
+    expect(highDance.independencePrice).toBe(lowDance.independencePrice);
+    const noDrinks = assignAvatar({ ...uniform(50), alcohol_plans: 0 });
+    const moreDrinks = assignAvatar({ ...uniform(50), alcohol_plans: 100 });
+    expect(moreDrinks.scores.drinking_machine).toBeGreaterThan(noDrinks.scores.drinking_machine);
+    for (const key of ["conscientiousness", "loyalty", "boundaryRespect", "minorNormConcern", "competitiveness"] as const) {
+      expect(moreDrinks.dimensions[key]).toBe(noDrinks.dimensions[key]);
+    }
+  });
   it("does not infer morality or social behavior from vacation destination", () => {
     const newYork = computeDimensions({ ...uniform(50), vacation_destination: 0 });
     const california = computeDimensions({ ...uniform(50), vacation_destination: 100 });
@@ -91,8 +128,8 @@ describe("avatar assignment", () => {
       const extremeLow = assignAvatar({ ...base, [q.id]: 0 }).type;
       const extremeHigh = assignAvatar({ ...base, [q.id]: 100 }).type;
       // A lone extreme answer on a neutral profile should keep it Chameleon-ish or at most move one step.
-      expect(["chameleon", "kitchen_npc", "ghost", "observer", "life_of_party"]).toContain(extremeLow);
-      expect(["chameleon", "kitchen_npc", "ghost", "observer", "life_of_party"]).toContain(extremeHigh);
+      expect(["chameleon", "kitchen_npc", "ghost", "life_of_party"]).toContain(extremeLow);
+      expect(["chameleon", "kitchen_npc", "ghost", "life_of_party"]).toContain(extremeHigh);
     }
   });
 
@@ -124,16 +161,26 @@ describe("avatar assignment", () => {
 describe("compatibility", () => {
   const names = { a: { name: "You", you: true }, b: { name: "Alex", you: false } };
 
+  it("does not reinterpret legacy phone or revenge answers as new answers", () => {
+    const older = answersFromMap(uniform(50));
+    delete older.dancing_ability;
+    delete older.alcohol_plans;
+    const legacy = { ...older, phone_price: { normalized: 100, display: "$500,000+" }, revenge: { normalized: 100, display: "They started this." } };
+    const comparison = compare(legacy, answersFromMap({ ...uniform(50), dancing_ability: 0, alcohol_plans: 0 }), names);
+    expect(comparison.answered).toBe(13);
+    expect(comparison.percent).toBe(100);
+  });
+
   it("includes history and lyrics in comparisons without inventing answers for older guests", () => {
     const older = answersFromMap(uniform(50));
     delete older.history_sharing;
     delete older.song_lyrics;
     const current = answersFromMap({ ...uniform(50), history_sharing: 100, song_lyrics: 100 });
     const legacyComparison = compare(older, current, names);
-    expect(legacyComparison.answered).toBe(14);
+    expect(legacyComparison.answered).toBe(13);
     expect(legacyComparison.percent).toBe(100);
     const comparison = compare(answersFromMap({ ...uniform(50), history_sharing: 0, song_lyrics: 0 }), current, names);
-    expect(comparison.answered).toBe(16);
+    expect(comparison.answered).toBe(15);
     expect(comparison.starters.join(" ")).toContain("ChatGPT history");
     expect(comparison.starters.join(" ")).toContain("Karaoke duet");
   });
@@ -143,7 +190,7 @@ describe("compatibility", () => {
     delete legacy.vacation_destination;
     const current = answersFromMap({ ...uniform(50), vacation_destination: 100 });
     const comparison = compare(legacy, current, names);
-    expect(comparison.answered).toBe(15);
+    expect(comparison.answered).toBe(14);
     expect(comparison.percent).toBe(100);
     expect(comparison.all.some((item) => item.question.id === "vacation_destination")).toBe(false);
   });
@@ -153,11 +200,11 @@ describe("compatibility", () => {
     expect(compatibilityPercent(answersFromMap(uniform(0)), answersFromMap(uniform(100)))).toBe(0);
   });
 
-  it("averages similarity across all 16 questions and compares money by position", () => {
+  it("averages similarity across all 15 questions and compares money by position", () => {
     const a = answersFromMap({ ...uniform(50), assistant_pay: 0 });
     const b = answersFromMap({ ...uniform(50), assistant_pay: 100 });
-    // 15 identical + one fully opposite: (15/16)*100 = 93.75 → 94
-    expect(compatibilityPercent(a, b)).toBe(94);
+    // 14 identical + one fully opposite: (14/15)*100 ≈ 93.33 → 93
+    expect(compatibilityPercent(a, b)).toBe(93);
     const c = compare(a, b, names);
     expect(c.moneyGaps[0].question.id).toBe("assistant_pay");
     expect(c.moneyGaps[0].diff).toBe(100);
@@ -202,7 +249,7 @@ describe("party stats", () => {
   it("computes medians, histograms, and highlights", () => {
     const stats = computePartyStats(people);
     expect(stats.completed).toBe(people.length);
-    expect(stats.questions).toHaveLength(16);
+    expect(stats.questions).toHaveLength(15);
     for (const q of stats.questions) {
       expect(q.histogram.reduce((a, b) => a + b, 0)).toBe(people.length);
       expect(q.median).toBeGreaterThanOrEqual(0);
