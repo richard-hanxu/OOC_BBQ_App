@@ -2,6 +2,12 @@
 
 Snapshot of the project state for the next agent. Read `README.md` for the product/architecture overview; this file covers **what is done, what was verified, what is unverified, and what to do next**.
 
+## Optional food/supplies (September 27, 2026)
+
+- Join and edit-profile forms now offer an optional checkbox revealing a 500-character food/supplies note, with explicit reassurance that bringing anything is not necessary. Unchecking and saving clears it.
+- `broughtItems` is persisted in both stores, visible only to owner/organizers, displayed in admin, and exported as `brought_items`. Older profiles default to no note.
+- Existing Supabase databases need `supabase/migrations/20260927_brought_items.sql`; migration was not applied remotely. Full schema includes the column for fresh installs.
+
 ## Contact retention and usage guide (September 27, 2026)
 
 - README now starts with attendee and organizer guides, database setup, in-party operations, post-party CSV/database access, a contacts-only SQL query, and storage/privacy caveats.

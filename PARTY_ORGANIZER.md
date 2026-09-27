@@ -79,6 +79,8 @@ The app does not currently provide editing/deleting announcements or reopening p
 
 ## Manage attendees
 
+Guests may optionally record food or supplies on their join/edit-profile form. Bringing something is **not required**. Their note appears as **Brought: …** below their name/school in the organizer participant list and in the CSV's `brought_items` column; other guests do not receive it. Guests can uncheck and save to remove the note. Existing Supabase projects must also run [the food/supplies migration](supabase/migrations/20260927_brought_items.sql) before using this feature. New projects use the updated full schema.
+
 The control room shows participant counts, quiz progress, avatar distribution, and question statistics. Refresh the page to update participant counts after new guests join.
 
 | Control | What it does |

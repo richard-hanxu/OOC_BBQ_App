@@ -26,12 +26,13 @@ describe("authenticated party endpoints", () => {
     expect((await exportContacts()).status).toBe(401);
     expect(mocks.store.listParticipants).not.toHaveBeenCalled();
     mocks.admin.mockResolvedValue(true);
-    mocks.store.listParticipants.mockResolvedValue([guest]);
+    mocks.store.listParticipants.mockResolvedValue([{ ...guest, broughtItems: "Paper plates" }]);
     const response = await exportContacts();
     const csv = await response.text();
     expect(response.status).toBe(200);
     expect(csv).toContain(guest.email); expect(csv).toContain(guest.phone);
     expect(csv).toContain("contact_visibility"); expect(csv).toContain("organizers");
+    expect(csv).toContain("brought_items"); expect(csv).toContain("Paper plates");
     expect(csv).not.toContain(guest.tokenHash);
     expect(response.headers.get("cache-control")).toBe("no-store");
   });

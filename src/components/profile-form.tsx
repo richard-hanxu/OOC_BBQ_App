@@ -30,7 +30,9 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
     email: existing?.email ?? "",
     university: isCmu(initialUniversity) ? "" : initialUniversity,
     cmuProgram: existing?.cmuProgram ?? "",
+    broughtItems: existing?.broughtItems ?? "",
   });
+  const [broughtSomething, setBroughtSomething] = useState(Boolean(existing?.broughtItems));
   const [consent, setConsent] = useState(Boolean(existing));
   const [contactVisibility, setContactVisibility] = useState<ContactVisibility>(existing?.contactVisibility ?? "guests");
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
@@ -46,6 +48,10 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (broughtSomething && !form.broughtItems.trim()) {
+      setError({ message: "Let us know what you brought, or uncheck the box—bringing something is completely optional.", field: "broughtItems" });
+      return;
+    }
     if (universityChoice === "other" && !form.university.trim()) {
       setError({ message: "Enter your university, or leave the university choice blank.", field: "university" });
       return;
@@ -65,6 +71,7 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
         cmuProgram: showsCmu ? form.cmuProgram || null : null,
         consent,
         contactVisibility,
+        broughtItems: broughtSomething ? form.broughtItems.trim() : null,
       };
       const res = await fetch(existing ? "/api/me" : "/api/participants", {
         method: existing ? "PATCH" : "POST",
@@ -144,6 +151,24 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
           )}
         </div>
       </div>
+
+      <section className="glass space-y-3 rounded-2xl p-4" aria-labelledby="supplies-heading">
+        <h2 id="supplies-heading" className="text-base font-bold">🍉 Food & supplies (optional)</h2>
+        <p id="supplies-note" className="text-sm leading-relaxed text-muted-foreground">Bringing something is not necessary—just bring yourself! If you did bring anything, you can let the organizers know here.</p>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold">
+          <Checkbox checked={broughtSomething} aria-describedby="supplies-note" aria-controls={broughtSomething ? "broughtItems" : undefined}
+            onCheckedChange={(checked) => { setBroughtSomething(checked === true); if (error?.field === "broughtItems") setError(null); }} className="size-5" />
+          Yes, I brought food or supplies
+        </label>
+        {broughtSomething && <div className="animate-rise space-y-2">
+          <Field label="What did you bring?" htmlFor="broughtItems">
+            <Input id="broughtItems" value={form.broughtItems} onChange={set("broughtItems")} maxLength={500} required
+              aria-invalid={error?.field === "broughtItems"} aria-describedby="broughtItems-help" className={fieldClass("broughtItems")}
+              placeholder="e.g. chips, veggie burgers, ice, or paper plates" />
+          </Field>
+          <p id="broughtItems-help" className="text-xs text-muted-foreground">Shared with organizers only. You can update this later in your profile.</p>
+        </div>}
+      </section>
 
       {!existing && (
         <label

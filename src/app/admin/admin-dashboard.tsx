@@ -186,6 +186,7 @@ export function AdminDashboard() {
                         <div className="text-xs text-muted-foreground">
                           {schoolLine(p) || "—"}
                         </div>
+                        {p.broughtItems && <div className="mt-1 max-w-xs break-words text-xs text-lime">Brought: {p.broughtItems}</div>}
                       </div>
                     </div>
                   </td>

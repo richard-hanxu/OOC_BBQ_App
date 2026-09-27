@@ -144,6 +144,8 @@ Before running this version against an existing database, run [the privacy and a
 
 ## Contact privacy and CMU programs
 
+The join/edit-profile form also has an optional **Yes, I brought food or supplies** checkbox. Checking it reveals a description field (up to 500 characters). Bringing anything is explicitly not required. Notes are visible only to the attendee and organizers, appear in the organizer participant list, and are included in CSV exports. Unchecking and saving removes the note. Existing Supabase projects must run [the food/supplies migration](supabase/migrations/20260927_brought_items.sql); fresh installs use the updated full schema.
+
 Guests can check **Keep my phone and email organizer-only** when joining or editing their profile. The server removes both fields from other guests' API and initial page payloads; the owner and authenticated organizers retain access. Names, university and quiz answers stay visible to joined guests. Existing profiles retain their previous guest-visible contact setting until changed. Privacy changes cannot retract details someone already viewed or copied.
 
 The CMU picker uses `emoji ACRONYM [Full degree name]`, with search by degree, acronym or school and a custom-entry fallback. [Catalog scope and official CMU sources](docs/CMU_PROGRAMS.md) explain degree names, abbreviations, graduate variants and exclusions.

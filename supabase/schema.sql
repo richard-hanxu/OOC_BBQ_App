@@ -12,6 +12,7 @@ create table if not exists participants (
   last_name text not null,
   phone text not null,
   email text not null,
+  brought_items text check (char_length(brought_items) <= 500),
   undergraduate_university text,
   graduate_university text,
   cmu_program text,

@@ -14,6 +14,7 @@ interface ParticipantRow {
   phone: string;
   email: string;
   contact_visibility: "guests" | "organizers";
+  brought_items: string | null;
   undergraduate_university: string | null;
   graduate_university: string | null;
   cmu_program: string | null;
@@ -39,6 +40,7 @@ function rowToParticipant(r: ParticipantRow): Participant {
     phone: r.phone,
     email: r.email,
     contactVisibility: r.contact_visibility ?? "guests",
+    broughtItems: r.brought_items ?? null,
     undergraduateUniversity: r.undergraduate_university,
     graduateUniversity: r.graduate_university,
     cmuProgram: r.cmu_program,
@@ -57,6 +59,7 @@ function profilePatchToRow(patch: Partial<ProfileInput>) {
   if (patch.phone !== undefined) row.phone = patch.phone;
   if (patch.email !== undefined) row.email = patch.email;
   if (patch.contactVisibility !== undefined) row.contact_visibility = patch.contactVisibility;
+  if (patch.broughtItems !== undefined) row.brought_items = patch.broughtItems;
   if (patch.undergraduateUniversity !== undefined) row.undergraduate_university = patch.undergraduateUniversity ?? null;
   if (patch.graduateUniversity !== undefined) row.graduate_university = patch.graduateUniversity ?? null;
   if (patch.cmuProgram !== undefined) row.cmu_program = patch.cmuProgram ?? null;
@@ -152,6 +155,7 @@ export class SupabaseStore implements Store {
         phone: input.phone,
         email: input.email,
         contact_visibility: input.contactVisibility ?? "guests",
+        brought_items: input.broughtItems ?? null,
         undergraduate_university: input.undergraduateUniversity ?? null,
         graduate_university: input.graduateUniversity ?? null,
         cmu_program: input.cmuProgram ?? null,

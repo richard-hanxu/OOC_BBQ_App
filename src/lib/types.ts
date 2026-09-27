@@ -18,6 +18,7 @@ export interface Participant {
   phone: string;
   email: string;
   contactVisibility?: ContactVisibility;
+  broughtItems?: string | null;
   undergraduateUniversity: string | null;
   graduateUniversity: string | null;
   cmuProgram: string | null;
@@ -41,7 +42,8 @@ export function toPublic(p: Participant, access: { viewerId?: string; organizer?
   const { activities: _activities, ...profile } = rest as typeof rest & { activities?: unknown };
   void _activities;
   const visible = p.contactVisibility !== "organizers" || access.organizer || access.viewerId === p.id;
-  return { ...profile, contactVisibility: p.contactVisibility ?? "guests", phone: visible ? p.phone : null, email: visible ? p.email : null };
+  return { ...profile, contactVisibility: p.contactVisibility ?? "guests", phone: visible ? p.phone : null, email: visible ? p.email : null,
+    broughtItems: access.organizer || access.viewerId === p.id ? p.broughtItems ?? null : null };
 }
 
 export interface ProfileInput {
@@ -50,6 +52,7 @@ export interface ProfileInput {
   phone: string;
   email: string;
   contactVisibility?: ContactVisibility;
+  broughtItems?: string | null;
   undergraduateUniversity?: string | null;
   graduateUniversity?: string | null;
   cmuProgram?: string | null;

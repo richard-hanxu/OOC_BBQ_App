@@ -40,6 +40,14 @@ export function validateProfile(body: unknown, { partial = false } = {}): Partia
   if (b.undergraduateUniversity !== undefined) out.undergraduateUniversity = opt(b.undergraduateUniversity);
   if (b.graduateUniversity !== undefined) out.graduateUniversity = opt(b.graduateUniversity);
   if (b.cmuProgram !== undefined) out.cmuProgram = opt(b.cmuProgram, 240);
+  if (b.broughtItems !== undefined) {
+    if (b.broughtItems !== null && typeof b.broughtItems !== "string") {
+      throw new ValidationError("Describe what you brought using text.", "broughtItems");
+    }
+    const items = typeof b.broughtItems === "string" ? b.broughtItems.trim() : "";
+    if (items.length > 500) throw new ValidationError("Keep your food/supplies note to 500 characters.", "broughtItems");
+    out.broughtItems = items || null;
+  }
   if (b.contactVisibility !== undefined) {
     if (b.contactVisibility !== "guests" && b.contactVisibility !== "organizers") {
       throw new ValidationError("Choose who can see your contact info.", "contactVisibility");

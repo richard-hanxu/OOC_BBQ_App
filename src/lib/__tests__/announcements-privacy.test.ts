@@ -47,6 +47,36 @@ describe("contact privacy", () => {
   });
 });
 
+describe("optional food and supplies", () => {
+  it("accepts omitted or empty notes and validates the description", () => {
+    expect(validateProfile({}, { partial: true })).not.toHaveProperty("broughtItems");
+    expect(validateProfile({ broughtItems: "  Ice and cups  " }, { partial: true }).broughtItems).toBe("Ice and cups");
+    for (const value of [null, "", "   "]) expect(validateProfile({ broughtItems: value }, { partial: true }).broughtItems).toBeNull();
+    expect(() => validateProfile({ broughtItems: true }, { partial: true })).toThrow();
+    expect(() => validateProfile({ broughtItems: "x".repeat(501) }, { partial: true })).toThrow();
+    expect(validateProfile({ broughtItems: "x".repeat(500) }, { partial: true }).broughtItems).toHaveLength(500);
+  });
+  it("saves on signup, persists edits, and clears the note when unchecked", async () => {
+    const p = await store.createParticipant({ ...profile, tokenHash: "supplies-test", broughtItems: "Chips" });
+    expect(p.broughtItems).toBe("Chips");
+    await store.updateProfile(p.id, { broughtItems: "Chips and ice" });
+    const reloaded = await new FileStore(path.join(directory, "data.json")).getParticipant(p.id);
+    expect(reloaded?.broughtItems).toBe("Chips and ice");
+    await store.updateProfile(p.id, { broughtItems: null });
+    expect((await new FileStore(path.join(directory, "data.json")).getParticipant(p.id))?.broughtItems).toBeNull();
+    expect(participant.broughtItems).toBeNull();
+  });
+  it("shares the note only with the owner and organizers, independent of contact visibility", () => {
+    const p = { ...participant, contactVisibility: "guests" as const, broughtItems: "Veggie burgers" };
+    expect(toPublic(p).broughtItems).toBeNull();
+    expect(toPublic(p, { viewerId: "another-guest" }).broughtItems).toBeNull();
+    expect(toPublic(p, { viewerId: p.id }).broughtItems).toBe("Veggie burgers");
+    expect(toPublic(p, { organizer: true }).broughtItems).toBe("Veggie burgers");
+    const legacy = { ...participant }; delete legacy.broughtItems;
+    expect(toPublic(legacy, { viewerId: legacy.id }).broughtItems).toBeNull();
+  });
+});
+
 describe("announcements and polls", () => {
   it("accepts a plain announcement or two to four unique options", () => {
     expect(validateAnnouncement({ title: " Hi ", body: " Everyone " })).toEqual({ title: "Hi", body: "Everyone", options: [] });

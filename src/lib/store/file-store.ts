@@ -121,6 +121,7 @@ export class FileStore implements Store {
       phone: input.phone,
       email: input.email,
       contactVisibility: input.contactVisibility ?? "guests",
+      broughtItems: input.broughtItems ?? null,
       undergraduateUniversity: input.undergraduateUniversity ?? null,
       graduateUniversity: input.graduateUniversity ?? null,
       cmuProgram: input.cmuProgram ?? null,
@@ -151,6 +152,7 @@ export class FileStore implements Store {
       if (patch.phone !== undefined) p.phone = patch.phone;
       if (patch.email !== undefined) p.email = patch.email;
       if (patch.contactVisibility !== undefined) p.contactVisibility = patch.contactVisibility;
+      if (patch.broughtItems !== undefined) p.broughtItems = patch.broughtItems;
       if (patch.undergraduateUniversity !== undefined) p.undergraduateUniversity = patch.undergraduateUniversity ?? null;
       if (patch.graduateUniversity !== undefined) p.graduateUniversity = patch.graduateUniversity ?? null;
       if (patch.cmuProgram !== undefined) p.cmuProgram = patch.cmuProgram ?? null;
