@@ -211,6 +211,23 @@ Supabase SQL will not affect local JSON data. The default file is `.data/party.j
 
 The renamed file contains private contact information: keep it private and dispose of it deliberately when no longer needed. Switching from file storage to Supabase does not migrate local attendees automatically.
 
+## Returning attendees and duplicate accounts
+
+Attendees can choose **Already joined? Sign back in** on the welcome page or open `/sign-in`. Both the phone number and email must match one existing attendee. Completed guests land on **Me**; unfinished guests resume the quiz. Saved answers and votes are preserved, and the old browser session is invalidated. Sign-in sends no texts or emails. Seed profiles cannot sign in this way.
+
+New registrations and profile edits reject any phone number or email already used by another attendee. Email case and phone punctuation do not matter; a US/Canadian `+1` prefix is optional. Other international numbers need the original country code.
+
+Before deploying this update to an existing Supabase project:
+
+1. Export/back up attendee data.
+2. Open **SQL Editor → New query**, paste [the sign-in migration](supabase/migrations/20260927_participant_signin.sql), and run it. New projects can use the full schema instead.
+3. If it reports duplicates, no attendee data was changed. Inspect `participants` in Table Editor for repeated emails (ignoring case) or phone numbers (ignoring punctuation and the optional North American `1`). Confirm the correct record with the attendee; preserve any needed answers/votes before correcting or removing a duplicate through your organizer/database tools. Then rerun the migration. Nothing is merged automatically.
+4. Deploy, then test your own account in a private browser: wrong details should fail, matching details should restore your existing profile, and a duplicate signup should be refused.
+
+The private `participant_signin_attempts` table stores hashed-email attempt counters, not raw credentials. Ten attempts per email are allowed per fifteen-minute window. Old counters are cleaned up during sign-in. If resetting *all* test data, you can also run `delete from public.participant_signin_attempts;` to clear test throttles. Local JSON persists equivalent counters in its data file.
+
+**Important security tradeoff:** this is not verified authentication. Anyone who knows an attendee's phone and email can access their profile. Both may already be visible in the guest directory. Organizer-only visibility reduces exposure but does not prove ownership. Keep this in mind before collecting sensitive information; a password or verified sign-in method would be needed for stronger protection. The per-email limit does not replace broader abuse protection, and someone repeatedly trying an email can temporarily prevent its owner from signing in.
+
 ## Troubleshooting
 
 - **“Set ADMIN_PASSWORD” on the organizer page:** configure it in `.env.local` or hosting environment variables, not just `.env.example`, then restart/redeploy.

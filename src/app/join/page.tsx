@@ -24,9 +24,9 @@ export default async function JoinPage() {
         <ProfileForm />
       </div>
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        Already joined on this phone?{" "}
-        <Link href="/me" className="underline">
-          Go to your results
+        Already joined?{" "}
+        <Link href="/sign-in" className="underline">
+          Sign back in
         </Link>
         .
       </p>

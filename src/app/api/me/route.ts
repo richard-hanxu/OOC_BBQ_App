@@ -3,6 +3,7 @@ import { currentParticipant } from "@/lib/server/auth";
 import { ValidationError, validateProfile } from "@/lib/server/validate";
 import { getStore } from "@/lib/store";
 import { isCmu, toPublic } from "@/lib/types";
+import { DuplicateContactError } from "@/lib/contacts";
 
 export async function GET() {
   const me = await currentParticipant();
@@ -29,6 +30,7 @@ export async function PATCH(req: Request) {
     const updated = await store.updateProfile(me.id, patch);
     return NextResponse.json({ participant: toPublic(updated ?? me, { viewerId: me.id }) });
   } catch (e) {
+    if (e instanceof DuplicateContactError) return NextResponse.json({ error: e.message }, { status: 409 });
     if (e instanceof ValidationError) return NextResponse.json({ error: e.message, field: e.field }, { status: 400 });
     throw e;
   }

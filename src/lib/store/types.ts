@@ -19,6 +19,7 @@ export interface Store {
   listParticipants(): Promise<Participant[]>;
   getParticipant(id: string): Promise<Participant | null>;
   getParticipantByTokenHash(tokenHash: string): Promise<Participant | null>;
+  recoverParticipant(phone: string, email: string, tokenHash: string): Promise<Participant | null>;
   createParticipant(input: CreateParticipantInput): Promise<Participant>;
   updateProfile(id: string, patch: Partial<ProfileInput>): Promise<Participant | null>;
   saveAnswers(id: string, answers: Answers, avatarType: AvatarType): Promise<Participant | null>;

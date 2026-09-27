@@ -57,7 +57,7 @@ describe("optional food and supplies", () => {
     expect(validateProfile({ broughtItems: "x".repeat(500) }, { partial: true }).broughtItems).toHaveLength(500);
   });
   it("saves on signup, persists edits, and clears the note when unchecked", async () => {
-    const p = await store.createParticipant({ ...profile, tokenHash: "supplies-test", broughtItems: "Chips" });
+    const p = await store.createParticipant({ ...profile, phone: "+14125550124", email: "supplies@example.com", tokenHash: "supplies-test", broughtItems: "Chips" });
     expect(p.broughtItems).toBe("Chips");
     await store.updateProfile(p.id, { broughtItems: "Chips and ice" });
     const reloaded = await new FileStore(path.join(directory, "data.json")).getParticipant(p.id);

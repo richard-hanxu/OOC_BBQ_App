@@ -3,6 +3,7 @@ import { currentParticipant, hashToken, newToken, setParticipantCookie } from "@
 import { ValidationError, validateProfile } from "@/lib/server/validate";
 import { getStore } from "@/lib/store";
 import { toPublic, type ProfileInput } from "@/lib/types";
+import { DuplicateContactError } from "@/lib/contacts";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -25,17 +26,22 @@ export async function POST(req: Request) {
     throw e;
   }
 
-  // A returning guest re-submitting the form keeps their existing record.
-  const existing = await currentParticipant();
-  if (existing) {
-    const store = await getStore();
-    const updated = await store.updateProfile(existing.id, profile);
-    return NextResponse.json({ participant: toPublic(updated ?? existing, { viewerId: existing.id }), existing: true });
-  }
+  try {
+    // A returning guest re-submitting the form keeps their existing record.
+    const existing = await currentParticipant();
+    if (existing) {
+      const store = await getStore();
+      const updated = await store.updateProfile(existing.id, profile);
+      return NextResponse.json({ participant: toPublic(updated ?? existing, { viewerId: existing.id }), existing: true });
+    }
 
-  const token = newToken();
-  const store = await getStore();
-  const participant = await store.createParticipant({ ...profile, tokenHash: hashToken(token) });
-  await setParticipantCookie(token);
-  return NextResponse.json({ participant: toPublic(participant, { viewerId: participant.id }) }, { status: 201 });
+    const token = newToken();
+    const store = await getStore();
+    const participant = await store.createParticipant({ ...profile, tokenHash: hashToken(token) });
+    await setParticipantCookie(token);
+    return NextResponse.json({ participant: toPublic(participant, { viewerId: participant.id }) }, { status: 201 });
+  } catch (error) {
+    if (error instanceof DuplicateContactError) return NextResponse.json({ error: error.message }, { status: 409 });
+    throw error;
+  }
 }

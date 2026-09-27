@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { DuplicateContactError, SignInRateLimitError, emailKey, phoneKey } from "../contacts";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { AvatarType } from "../avatars";
@@ -10,6 +11,7 @@ interface FileShape {
   version: 1;
   participants: Participant[];
   announcements: AnnouncementRecord[];
+  signInAttempts: Record<string, { count: number; expiresAt: number }>;
 }
 
 /**
@@ -31,9 +33,9 @@ export class FileStore implements Store {
         try {
           const raw = await readFile(this.filePath, "utf8");
           const parsed = JSON.parse(raw) as FileShape;
-          this.data = { version: 1, participants: parsed.participants ?? [], announcements: parsed.announcements ?? [] };
+          this.data = { version: 1, participants: parsed.participants ?? [], announcements: parsed.announcements ?? [], signInAttempts: parsed.signInAttempts ?? {} };
         } catch {
-          this.data = { version: 1, participants: [], announcements: [] };
+          this.data = { version: 1, participants: [], announcements: [], signInAttempts: {} };
         }
         return this.data;
       })();
@@ -121,6 +123,7 @@ export class FileStore implements Store {
 
   async createParticipant(input: CreateParticipantInput) {
     const d = await this.load();
+    this.assertUniqueContacts(d.participants, input);
     const now = new Date().toISOString();
     const p: Participant = {
       id: randomUUID(),
@@ -145,6 +148,29 @@ export class FileStore implements Store {
     return clone(p);
   }
 
+  private assertUniqueContacts(people: Participant[], contact: { phone: string; email: string }, exceptId?: string) {
+    if (people.some((p) => p.id !== exceptId && (phoneKey(p.phone) === phoneKey(contact.phone) || emailKey(p.email) === emailKey(contact.email)))) {
+      throw new DuplicateContactError();
+    }
+  }
+
+  async recoverParticipant(phone: string, email: string, tokenHash: string) {
+    const data = await this.load();
+    const now = Date.now();
+    for (const [key, attempt] of Object.entries(data.signInAttempts)) {
+      if (attempt.expiresAt <= now) delete data.signInAttempts[key];
+    }
+    const key = createHash("sha256").update(emailKey(email)).digest("hex");
+    const attempt = data.signInAttempts[key] ?? { count: 0, expiresAt: now + 15 * 60 * 1000 };
+    if (attempt.count >= 10) throw new SignInRateLimitError();
+    data.signInAttempts[key] = { ...attempt, count: attempt.count + 1 };
+    const matches = data.participants.filter((p) => !p.isSeed && emailKey(p.email) === emailKey(email) && phoneKey(p.phone) === phoneKey(phone));
+    const participant = matches.length === 1 ? matches[0] : null;
+    if (participant) participant.tokenHash = tokenHash;
+    await this.persist();
+    return participant ? clone(participant) : null;
+  }
+
   private async mutate(id: string, fn: (p: Participant) => void) {
     const d = await this.load();
     const p = d.participants.find((x) => x.id === id);
@@ -156,6 +182,7 @@ export class FileStore implements Store {
 
   updateProfile(id: string, patch: Partial<ProfileInput>) {
     return this.mutate(id, (p) => {
+      this.assertUniqueContacts(this.data!.participants, { phone: patch.phone ?? p.phone, email: patch.email ?? p.email }, id);
       if (patch.firstName !== undefined) p.firstName = patch.firstName;
       if (patch.lastName !== undefined) p.lastName = patch.lastName;
       if (patch.phone !== undefined) p.phone = patch.phone;

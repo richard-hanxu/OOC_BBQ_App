@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
+import { DuplicateContactError, SignInRateLimitError } from "../contacts";
 import type { AnnouncementInput, AnnouncementRecord, PollOption, VoteResult } from "../announcements";
 import { isAvatarType, type AvatarType } from "../avatars";
 import type { QuestionId } from "../questions";
@@ -172,6 +173,7 @@ export class SupabaseStore implements Store {
       })
       .select("id")
       .single();
+    if (error?.code === "23505") throw new DuplicateContactError();
     if (error) throw error;
     const id = (data as { id: string }).id;
     if (input.answers && Object.keys(input.answers).length) await this.writeAnswers(id, input.answers);
@@ -184,9 +186,17 @@ export class SupabaseStore implements Store {
     const row = profilePatchToRow(patch);
     if (Object.keys(row).length) {
       const { error } = await this.client.from("participants").update(row).eq("id", id);
+      if (error?.code === "23505") throw new DuplicateContactError();
       if (error) throw error;
     }
     return this.getParticipant(id);
+  }
+
+  async recoverParticipant(phone: string, email: string, tokenHash: string) {
+    const { data, error } = await this.client.rpc("recover_party_participant", { p_phone: phone, p_email: email, p_token_hash: tokenHash });
+    if (error?.message === "signin_rate_limited") throw new SignInRateLimitError();
+    if (error) throw error;
+    return data ? this.getParticipant(data as string) : null;
   }
 
   private async writeAnswers(id: string, answers: Answers) {

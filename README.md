@@ -13,7 +13,11 @@ Everything is a private directory for guests only: `noindex`, `robots.txt` disal
 5. Explore the tabs: **Me** shows your party type and matches; **People** lets you compare answers with guests; **Opinions** shows the room's takes; **Announcements** shows organizer updates and polls. Tap any avatar to learn what it means.
 6. Vote once per poll; selecting a different option changes your vote until voting closes. You can edit your contact details and privacy choice from **Me → Edit profile** without retaking the quiz.
 
-Return using the same browser to keep your session. This app has no email/password login or account recovery: clearing cookies or switching devices can create a second profile. The history-sharing question is hypothetical; no YouTube or ChatGPT history is collected.
+Return using the same browser to keep your session, or select **Already joined? Sign back in** on the welcome page. Enter the phone number and email from the same existing profile. Completed attendees go to their profile; unfinished attendees resume the quiz. Sign-in rotates the session token, signing out the previous browser. New registrations and profile edits cannot reuse another attendee's phone number or email. Email matching ignores case and outer spaces; phone matching ignores punctuation and treats US/Canadian numbers with or without `+1` as equal. Use the original country code for other numbers. The history-sharing question is hypothetical; no YouTube or ChatGPT history is collected.
+
+**Security limitation:** phone-and-email sign-in is intentionally lightweight, with no password or ownership verification. Anyone who knows both can access that profile, including contact details and private answers. Guest-visible contacts reveal both sign-in details. Organizer-only contact visibility reduces this exposure but is not a substitute for verified authentication. Recovery is limited to ten attempts per email per fifteen minutes and does not allow fake seed profiles. No texts or emails are sent.
+
+Existing Supabase projects must run [the sign-in and unique-contacts migration](supabase/migrations/20260927_participant_signin.sql) before deploying this feature. It adds normalized unique indexes, a server-only recovery function, and a private rate-limit table. It refuses existing duplicate contacts without deleting anything. Export and resolve duplicates with the organizer before rerunning it. New projects use the updated full schema. Local JSON needs no migration; legacy duplicate pairs cannot be recovered automatically.
 
 ## Organizer guide
 

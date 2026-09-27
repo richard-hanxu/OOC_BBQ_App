@@ -39,6 +39,7 @@ export default async function WelcomePage() {
           Your answers are permanent once submitted. You can go back and change any answer before submitting.
         </p>
         <BigLink href="/join">Let&apos;s go →</BigLink>
+        <BigLink href="/sign-in" variant="ghost">Already joined? Sign back in →</BigLink>
         <p className="text-center text-xs text-muted-foreground">
           We ask for your phone and email so we can reach you after the party about payments or lost items.
           You can choose to share your contact info with other guests or keep it visible only to organizers.

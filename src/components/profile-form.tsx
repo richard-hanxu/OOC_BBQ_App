@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -189,6 +190,7 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
       {error && (
         <p role="alert" className="rounded-xl bg-destructive/15 px-3 py-2 text-sm font-semibold text-destructive">
           {error.message}
+          {error.message.includes("already registered") && <Link href="/sign-in" className="mt-2 block underline">Sign back in →</Link>}
         </p>
       )}
 
