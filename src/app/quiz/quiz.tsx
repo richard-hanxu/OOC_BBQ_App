@@ -152,7 +152,7 @@ export function Quiz({ firstName }: { firstName: string }) {
         </div>
         <h1 className="mt-3 text-balance text-[1.7rem] font-extrabold leading-tight sm:text-3xl">{q.text}</h1>
 
-        <div className="mt-auto pt-6">
+        <div className="my-auto pt-8 pb-2">
           <PartySlider question={q} value={value} onChange={setValue} onCommit={commit} />
         </div>
       </section>
