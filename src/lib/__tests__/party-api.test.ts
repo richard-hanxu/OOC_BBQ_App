@@ -22,6 +22,29 @@ const guest: Participant = { ...input, id, createdAt: "2026-09-27", avatarType: 
 beforeEach(() => { vi.resetAllMocks(); mocks.admin.mockResolvedValue(false); mocks.participant.mockResolvedValue(null); });
 
 describe("authenticated party endpoints", () => {
+  it("stores different grocery guesses without changing the assigned personality or observations", async () => {
+    mocks.participant.mockResolvedValue(guest);
+    const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.type === "binary" ? 0 : 50]));
+    const responses = [];
+    for (const groceryGuess of [0, 350.75, 100000]) {
+      const res = await submitQuiz(request({ answers, groceryGuess }));
+      expect(res.status).toBe(200);
+      responses.push(await res.json());
+      expect(mocks.store.saveAnswers.mock.lastCall?.[1].grocery_cost_guess.display).toBe(`$${groceryGuess.toFixed(2)}`);
+    }
+    expect(responses.map((r) => r.avatar)).toEqual([responses[0].avatar, responses[0].avatar, responses[0].avatar]);
+    expect(responses[1].observations).toEqual(responses[0].observations);
+    expect(responses[2].observations).toEqual(responses[0].observations);
+  });
+
+  it("rejects invalid or missing grocery guesses before saving", async () => {
+    mocks.participant.mockResolvedValue(guest);
+    const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.type === "binary" ? 0 : 50]));
+    for (const groceryGuess of [undefined, null, "200", -1, 100001, 1.234]) {
+      expect((await submitQuiz(request({ answers, groceryGuess }))).status).toBe(400);
+    }
+    expect(mocks.store.saveAnswers).not.toHaveBeenCalled();
+  });
   it("only exports contacts for authenticated organizers, including private and unfinished profiles", async () => {
     expect((await exportContacts()).status).toBe(401);
     expect(mocks.store.listParticipants).not.toHaveBeenCalled();
@@ -85,10 +108,10 @@ describe("authenticated party endpoints", () => {
   it("requires a real New York/California choice, not a slider midpoint", async () => {
     mocks.participant.mockResolvedValue(guest);
     const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, 50]));
-    expect((await submitQuiz(request({ answers }))).status).toBe(400);
+    expect((await submitQuiz(request({ groceryGuess: 200, answers }))).status).toBe(400);
     expect(mocks.store.saveAnswers).not.toHaveBeenCalled();
     for (const [value, label] of [[0, "New York"], [100, "California"]] as const) {
-      expect((await submitQuiz(request({ answers: { ...answers, vacation_destination: value } }))).status).toBe(200);
+      expect((await submitQuiz(request({ groceryGuess: 200, answers: { ...answers, vacation_destination: value } }))).status).toBe(200);
       expect(mocks.store.saveAnswers.mock.lastCall?.[1].vacation_destination).toEqual({ normalized: value, display: label });
     }
   });
@@ -98,13 +121,13 @@ describe("authenticated party endpoints", () => {
     const answers = Object.fromEntries(QUESTIONS.map((q) => [q.id, q.type === "binary" ? 0 : 50]));
     for (const id of ["history_sharing", "song_lyrics"]) {
       const incomplete = { ...answers }; delete incomplete[id];
-      expect((await submitQuiz(request({ answers: incomplete }))).status).toBe(400);
+      expect((await submitQuiz(request({ groceryGuess: 200, answers: incomplete }))).status).toBe(400);
     }
     expect(mocks.store.saveAnswers).not.toHaveBeenCalled();
-    expect((await submitQuiz(request({ answers: { ...answers, history_sharing: 20, song_lyrics: 90 } }))).status).toBe(200);
+    expect((await submitQuiz(request({ groceryGuess: 200, answers: { ...answers, history_sharing: 20, song_lyrics: 90 } }))).status).toBe(200);
     const saved = mocks.store.saveAnswers.mock.lastCall?.[1];
     expect(saved.history_sharing.normalized).toBe(20);
     expect(saved.song_lyrics.normalized).toBe(90);
-    expect(Object.keys(saved)).toHaveLength(16);
+    expect(Object.keys(saved)).toHaveLength(17);
   });
 });

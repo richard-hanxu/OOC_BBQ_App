@@ -1,6 +1,6 @@
 # Pool Party Personality
 
-A mobile-first party game for a university house party. Guests scan a QR code, fill in a short profile, answer **exactly 16 questions (15 sliders and a New York/California choice)** about fries, robots, Irish exits and questionable money decisions, review their answers, and get an automatically assigned **party type** (Ghost, Life of the Party, Chameleon, Drinking Machine, Game Goblin, Side Quest, Observer, Kitchen NPC). Then they can see who they align with and who they'd fight over the aux with. Clicking a guest's avatar explains their party type.
+A mobile-first party game for a university house party. Guests scan a QR code, fill in a short profile, answer **16 personality questions (15 sliders and a New York/California choice), plus a bonus BBQ grocery-cost guess** about fries, robots, Irish exits and questionable money decisions, review their answers, and get an automatically assigned **party type** (Ghost, Life of the Party, Chameleon, Drinking Machine, Game Goblin, Side Quest, Observer, Kitchen NPC). Then they can see who they align with and who they'd fight over the aux with. Clicking a guest's avatar explains their party type.
 
 Everything is a private directory for guests only: `noindex`, `robots.txt` disallow, and guest data endpoints require a participant cookie; organizer endpoints require an admin session.
 
@@ -133,6 +133,8 @@ supabase/migrations/        upgrades for existing Supabase projects
 ```
 
 ## Announcements and voting
+
+The quiz ends with a separate **BBQ grocery-cost guessing round** after the 16 personality questions. Guests enter a dollar amount, review/edit it, and submit it with their quiz. Closest guess wins a reward; furthest guess gets a playful forfeit. It does not affect avatars, observations, compatibility, or opinion statistics. Guesses are private to the attendee and organizers, appear in the admin participant list, and export as `grocery_cost_guess`. Organizers compare guesses against their receipt and announce the outcome manually; there is no automatic reward/forfeit selection. The bonus uses the existing answers table, so no new database migration is needed.
 
 Open `/admin`, sign in with `ADMIN_PASSWORD`, and use **Announcements** at the top of the control room. Enter a title and message, optionally enable **Include a vote**, enter 2–4 unique options, and post. Guests see updates in the **Announcements** tab; it refreshes every 30 seconds and on window focus. Messages are in-app only (no SMS, email, or push delivery).
 

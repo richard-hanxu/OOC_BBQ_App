@@ -79,6 +79,8 @@ The app does not currently provide editing/deleting announcements or reopening p
 
 ## Manage attendees
 
+The final quiz step is a bonus grocery-cost guess. Find **Grocery guess: $…** under each submitted participant or use the CSV's `grocery_cost_guess` column. Compare the amounts with the actual receipt: closest wins a reward and furthest gets a playful forfeit. Choose the reward, forfeit and any tie-break yourself, then announce the result. There is no automatic judging. Guesses don't affect personality/matches and aren't visible to other guests. Resetting the quiz also clears the bonus guess. Older submissions have no guess; they are not treated as $0. No extra database migration is needed for this bonus round.
+
 Guests may optionally record food or supplies on their join/edit-profile form. Bringing something is **not required**. Their note appears as **Brought: …** below their name/school in the organizer participant list and in the CSV's `brought_items` column; other guests do not receive it. Guests can uncheck and save to remove the note. Existing Supabase projects must also run [the food/supplies migration](supabase/migrations/20260927_brought_items.sql) before using this feature. New projects use the updated full schema.
 
 The control room shows participant counts, quiz progress, avatar distribution, and question statistics. Refresh the page to update participant counts after new guests join.

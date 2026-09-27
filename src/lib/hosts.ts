@@ -10,4 +10,6 @@ export interface HostProfile {
 export const HOSTS = {
   richard: { firstName: "Richard", fullName: "Richard Hanxu", major: "MSML", photoSrc: null },
   andrew: { firstName: "Andrew", fullName: "Andrew Wu", major: "MSR", photoSrc: null },
+  sunny: { firstName: "Andrew", fullName: "Andrew Wu", major: "MSR", photoSrc: null },
+  muyang: { firstName: "Andrew", fullName: "Andrew Wu", major: "MSR", photoSrc: null },
 } satisfies Record<string, HostProfile>;

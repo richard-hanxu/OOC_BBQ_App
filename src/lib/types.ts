@@ -6,7 +6,7 @@ export interface Answer {
   display: string;
 }
 
-export type Answers = Partial<Record<QuestionId, Answer>>;
+export type Answers = Partial<Record<QuestionId | "grocery_cost_guess", Answer>>;
 export type ContactVisibility = "guests" | "organizers";
 
 /** Full participant record as stored. Never sent to clients as-is (token hash). */
@@ -42,7 +42,10 @@ export function toPublic(p: Participant, access: { viewerId?: string; organizer?
   const { activities: _activities, ...profile } = rest as typeof rest & { activities?: unknown };
   void _activities;
   const visible = p.contactVisibility !== "organizers" || access.organizer || access.viewerId === p.id;
+  const { grocery_cost_guess: _guess, ...sharedAnswers } = p.answers;
+  void _guess;
   return { ...profile, contactVisibility: p.contactVisibility ?? "guests", phone: visible ? p.phone : null, email: visible ? p.email : null,
+    answers: access.organizer || access.viewerId === p.id ? p.answers : sharedAnswers,
     broughtItems: access.organizer || access.viewerId === p.id ? p.broughtItems ?? null : null };
 }
 

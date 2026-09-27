@@ -3,6 +3,7 @@ import { assignAvatar } from "@/lib/avatars";
 import type { AnswerMap } from "@/lib/dimensions";
 import { clamp, displayValueFor } from "@/lib/money";
 import { QUESTIONS, type QuestionId } from "@/lib/questions";
+import { GROCERY_GUESS_ID, groceryGuessAnswer, validGroceryGuess } from "@/lib/grocery-guess";
 import { currentParticipant } from "@/lib/server/auth";
 import { getStore } from "@/lib/store";
 import { toPublic, type Answers } from "@/lib/types";
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { answers?: Record<string, unknown> };
+  let body: { answers?: Record<string, unknown>; groceryGuess?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -40,6 +41,11 @@ export async function POST(req: Request) {
     answers[q.id] = { normalized, display: displayValueFor(q, normalized) };
   }
 
+  if (!validGroceryGuess(body?.groceryGuess)) {
+    return NextResponse.json({ error: "Enter your grocery-cost guess between $0 and $100,000, with up to two decimal places." }, { status: 400 });
+  }
+  // Deliberately excluded from the personality map, observations and compatibility.
+  answers[GROCERY_GUESS_ID] = groceryGuessAnswer(body.groceryGuess);
   const result = assignAvatar(map);
   const store = await getStore();
   const updated = await store.saveAnswers(me.id, answers, result.type);

@@ -187,6 +187,7 @@ export function AdminDashboard() {
                           {schoolLine(p) || "—"}
                         </div>
                         {p.broughtItems && <div className="mt-1 max-w-xs break-words text-xs text-lime">Brought: {p.broughtItems}</div>}
+                        {p.answers.grocery_cost_guess && <div className="mt-1 text-xs text-sun">Grocery guess: {p.answers.grocery_cost_guess.display}</div>}
                       </div>
                     </div>
                   </td>

@@ -2,6 +2,13 @@
 
 Snapshot of the project state for the next agent. Read `README.md` for the product/architecture overview; this file covers **what is done, what was verified, what is unverified, and what to do next**.
 
+## Grocery guessing bonus (September 27, 2026)
+
+- Added a final dollar-input bonus step after the 16 personality questions, with reward for closest guess and playful forfeit for furthest. Draft persistence, Back, review/edit and final submission include it. API validates $0–$100,000 with up to two decimals.
+- Stored under `grocery_cost_guess` in the existing answers collection/table, outside personality `QuestionId`. Exact amount is in `display`; normalized value is amount/100000*100 solely to fit the existing storage range. No migration required. Scoring, observations, comparisons and stats still iterate only the 16 personality questions.
+- Other guests' payloads omit bonus guesses; owner/admin retain them. Admin participant list and CSV expose guesses to organizers for manual judging. Quiz reset clears the guess too; legacy submissions remain unchanged.
+- 62 tests and lint pass. Typecheck currently fails on separate user host edits: page references lowercase `HOSTS.sunny`/`HOSTS.muyang` while configuration keys are `Sunny`/`Muyang`. These unrelated edits were left untouched.
+
 ## Optional food/supplies (September 27, 2026)
 
 - Join and edit-profile forms now offer an optional checkbox revealing a 500-character food/supplies note, with explicit reassurance that bringing anything is not necessary. Unchecking and saving clears it.
