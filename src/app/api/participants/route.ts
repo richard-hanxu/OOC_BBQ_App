@@ -30,12 +30,12 @@ export async function POST(req: Request) {
   if (existing) {
     const store = await getStore();
     const updated = await store.updateProfile(existing.id, profile);
-    return NextResponse.json({ participant: toPublic(updated ?? existing), existing: true });
+    return NextResponse.json({ participant: toPublic(updated ?? existing, { viewerId: existing.id }), existing: true });
   }
 
   const token = newToken();
   const store = await getStore();
   const participant = await store.createParticipant({ ...profile, tokenHash: hashToken(token) });
   await setParticipantCookie(token);
-  return NextResponse.json({ participant: toPublic(participant) }, { status: 201 });
+  return NextResponse.json({ participant: toPublic(participant, { viewerId: participant.id }) }, { status: 201 });
 }

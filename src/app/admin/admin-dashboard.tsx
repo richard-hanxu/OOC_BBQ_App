@@ -2,12 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AvatarArt } from "@/components/avatar-art";
+import { AvatarSummary } from "@/components/avatar-summary";
+import { AnnouncementBoard } from "@/components/announcement-board";
 import { MarkerTrack } from "@/components/party-slider";
 import { Card } from "@/components/ui-bits";
 import { AVATARS } from "@/lib/avatars";
 import { computePartyStats } from "@/lib/stats";
-import { ACTIVITY_BY_ID, fullName, schoolLine, type PublicParticipant } from "@/lib/types";
+import { fullName, schoolLine, type PublicParticipant } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface Payload {
@@ -55,7 +56,7 @@ export function AdminDashboard() {
   }
 
   const remove = async (p: PublicParticipant) => {
-    if (!confirm(`Delete ${fullName(p)}? This removes their answers and activities.`)) return;
+    if (!confirm(`Delete ${fullName(p)}? This removes their profile and answers.`)) return;
     setBusyId(p.id);
     await act("Delete", () => fetch(`/api/admin/participants/${p.id}`, { method: "DELETE" }));
     setBusyId(null);
@@ -99,7 +100,7 @@ export function AdminDashboard() {
         </div>
         <div className="flex gap-2">
           <a href="/api/admin/export" className="glass rounded-full px-3 py-1.5 text-xs font-bold">
-            Export CSV
+            Export contacts & answers
           </a>
           <button type="button" onClick={logout} className="glass rounded-full px-3 py-1.5 text-xs font-bold">
             Lock
@@ -112,6 +113,13 @@ export function AdminDashboard() {
           {error ?? message}
         </p>
       )}
+
+      <AnnouncementBoard organizer />
+
+      <p className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+        Attendee names, emails, and phone numbers are saved when they join, even before completing the quiz.
+        Organizer-only contacts are included in your export. Download a CSV after the party and keep it private.
+      </p>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Participants" value={stats.participants} />
@@ -126,7 +134,7 @@ export function AdminDashboard() {
           <ul className="mt-2 space-y-1.5">
             {stats.species.map((s) => (
               <li key={s.type} className="flex items-center gap-2 text-sm">
-                <AvatarArt type={s.type} size={24} />
+                <AvatarSummary type={s.type} size={24} />
                 <span className="flex-1">{AVATARS[s.type].name}</span>
                 <span className="tabular font-bold">
                   {s.count} <span className="text-muted-foreground">({s.percent}%)</span>
@@ -136,17 +144,7 @@ export function AdminDashboard() {
           </ul>
         </Card>
         <Card>
-          <h2 className="text-sm font-extrabold uppercase tracking-wider text-muted-foreground">Activity counts</h2>
-          <ul className="mt-2 space-y-1.5">
-            {stats.activities.map((a) => (
-              <li key={a.id} className="flex items-center gap-2 text-sm">
-                <span>{ACTIVITY_BY_ID[a.id].emoji}</span>
-                <span className="flex-1">{ACTIVITY_BY_ID[a.id].label}</span>
-                <span className="tabular font-bold">{a.count}</span>
-              </li>
-            ))}
-          </ul>
-          <h2 className="mt-4 text-sm font-extrabold uppercase tracking-wider text-muted-foreground">Seed data</h2>
+          <h2 className="text-sm font-extrabold uppercase tracking-wider text-muted-foreground">Seed data</h2>
           <div className="mt-2 flex gap-2">
             <button type="button" onClick={() => seed("load")} className="glass rounded-full px-3 py-1.5 text-xs font-bold">
               Load fake guests
@@ -180,13 +178,13 @@ export function AdminDashboard() {
                 <tr key={p.id} className="border-t border-white/10 align-top">
                   <td className="p-3">
                     <div className="flex items-center gap-2">
-                      <AvatarArt type={p.avatarType} size={32} />
+                      <AvatarSummary type={p.avatarType} name={fullName(p)} size={32} />
                       <div>
                         <div className="font-bold">
                           {fullName(p)} {p.isSeed && <span className="ml-1 rounded bg-sun/20 px-1 text-[10px] text-sun">seed</span>}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {schoolLine(p) || "—"} · {p.activities.map((a) => ACTIVITY_BY_ID[a].emoji).join(" ") || "no activities"}
+                          {schoolLine(p) || "—"}
                         </div>
                       </div>
                     </div>

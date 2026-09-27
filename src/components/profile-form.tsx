@@ -1,28 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CmuProgramPicker } from "@/components/cmu-program-picker";
 import { BigButton } from "@/components/ui-bits";
-import { isCmu, type PublicParticipant } from "@/lib/types";
+import { isCmu, universityFor, type ContactVisibility, type PublicParticipant } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const CMU_PROGRAMS = [
-  "MS Robotics",
-  "Computer Science",
-  "ECE",
-  "Mechanical Engineering",
-  "Tepper MBA",
-  "MISM",
-  "HCI",
-  "Machine Learning",
-  "Civil & Environmental",
-  "MSE",
-  "Design",
-  "Other",
-];
 
 interface Props {
   /** When set, the form edits an existing profile instead of creating one. */
@@ -33,23 +19,24 @@ interface Props {
 
 export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
   const router = useRouter();
+  const initialUniversity = existing ? universityFor(existing) : "";
+  const [universityChoice, setUniversityChoice] = useState(
+    initialUniversity ? (isCmu(initialUniversity) ? "cmu" : "other") : "",
+  );
   const [form, setForm] = useState({
     firstName: existing?.firstName ?? "",
     lastName: existing?.lastName ?? "",
     phone: existing?.phone ?? "",
     email: existing?.email ?? "",
-    undergraduateUniversity: existing?.undergraduateUniversity ?? "",
-    graduateUniversity: existing?.graduateUniversity ?? "",
+    university: isCmu(initialUniversity) ? "" : initialUniversity,
     cmuProgram: existing?.cmuProgram ?? "",
   });
   const [consent, setConsent] = useState(Boolean(existing));
+  const [contactVisibility, setContactVisibility] = useState<ContactVisibility>(existing?.contactVisibility ?? "guests");
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const showsCmu = useMemo(
-    () => isCmu(form.undergraduateUniversity) || isCmu(form.graduateUniversity),
-    [form.undergraduateUniversity, form.graduateUniversity],
-  );
+  const showsCmu = universityChoice === "cmu";
 
   const set = (k: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -59,18 +46,25 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (universityChoice === "other" && !form.university.trim()) {
+      setError({ message: "Enter your university, or leave the university choice blank.", field: "university" });
+      return;
+    }
     if (!existing && !consent) {
       setError({ message: "Please tick the box so everyone knows the deal.", field: "consent" });
       return;
     }
     setBusy(true);
     try {
+      const { university, ...profile } = form;
       const payload = {
-        ...form,
-        undergraduateUniversity: form.undergraduateUniversity || null,
-        graduateUniversity: form.graduateUniversity || null,
+        ...profile,
+        // Keep compatibility with existing stores; clear the former second school.
+        undergraduateUniversity: showsCmu ? "Carnegie Mellon University" : universityChoice === "other" ? university.trim() : null,
+        graduateUniversity: null,
         cmuProgram: showsCmu ? form.cmuProgram || null : null,
         consent,
+        contactVisibility,
       };
       const res = await fetch(existing ? "/api/me" : "/api/participants", {
         method: existing ? "PATCH" : "POST",
@@ -83,7 +77,7 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
         return;
       }
       if (onSaved) onSaved(json.participant);
-      else router.push("/join/activities");
+      else router.push("/quiz");
     } catch {
       setError({ message: "Couldn't reach the party server. Check your Wi-Fi and try again." });
     } finally {
@@ -110,47 +104,42 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
       <Field label="Email" htmlFor="email">
         <Input id="email" type="email" inputMode="email" autoComplete="email" required value={form.email} onChange={set("email")} className={fieldClass("email")} placeholder="you@school.edu" />
       </Field>
+      <label className="glass flex cursor-pointer items-start gap-3 rounded-2xl p-4 text-sm">
+        <Checkbox checked={contactVisibility === "organizers"} onCheckedChange={(checked) => setContactVisibility(checked === true ? "organizers" : "guests")} className="mt-0.5 size-5" />
+        <span><span className="block font-bold">🔒 Keep my phone and email organizer-only</span>
+          <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">Organizers can reach you about payments or lost items. Other guests will still see your name, school, and quiz results.</span>
+        </span>
+      </label>
 
       <div className="pt-2">
         <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Optional</div>
         <div className="space-y-3">
-          <Field label="Undergrad university" htmlFor="undergraduateUniversity">
-            <Input id="undergraduateUniversity" list="uni-list" autoComplete="off" value={form.undergraduateUniversity} onChange={set("undergraduateUniversity")} className={fieldClass("undergraduateUniversity")} placeholder="e.g. Carnegie Mellon University" />
+          <Field label="University" htmlFor="universityChoice">
+            <select
+              id="universityChoice"
+              value={universityChoice}
+              onChange={(e) => {
+                setUniversityChoice(e.target.value);
+                if (error?.field === "university") setError(null);
+              }}
+              className="h-12 w-full rounded-xl border border-input bg-background px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="">Select a university (optional)</option>
+              <option value="cmu">CMU</option>
+              <option value="other">Other</option>
+            </select>
           </Field>
-          <Field label="Grad university" htmlFor="graduateUniversity">
-            <Input id="graduateUniversity" list="uni-list" autoComplete="off" value={form.graduateUniversity} onChange={set("graduateUniversity")} className={fieldClass("graduateUniversity")} placeholder="If applicable" />
-          </Field>
-          <datalist id="uni-list">
-            {["Carnegie Mellon University", "University of Pittsburgh", "Penn State", "University of Toronto", "UC Berkeley", "MIT", "Stanford", "University of Michigan", "Georgia Tech", "Cornell", "Duquesne University", "Chatham University"].map((u) => (
-              <option key={u} value={u} />
-            ))}
-          </datalist>
+          {universityChoice === "other" && (
+            <Field label="Your university" htmlFor="university">
+              <Input id="university" autoComplete="off" required maxLength={120} value={form.university} onChange={set("university")} className={fieldClass("university")} placeholder="Enter your university" aria-invalid={error?.field === "university"} />
+            </Field>
+          )}
           {showsCmu && (
             <div className="animate-rise space-y-2 rounded-2xl border border-[#c41230]/40 bg-[#c41230]/15 p-3">
               <Label htmlFor="cmuProgram" className="text-sm font-bold">
                 CMU program / major
               </Label>
-              <Input id="cmuProgram" list="cmu-programs" autoComplete="off" value={form.cmuProgram} onChange={set("cmuProgram")} className={fieldClass("cmuProgram")} placeholder="e.g. MS Robotics" />
-              <datalist id="cmu-programs">
-                {CMU_PROGRAMS.map((p) => (
-                  <option key={p} value={p} />
-                ))}
-              </datalist>
-              <div className="flex flex-wrap gap-1.5">
-                {CMU_PROGRAMS.slice(0, 5).map((p) => (
-                  <button
-                    type="button"
-                    key={p}
-                    onClick={() => setForm((f) => ({ ...f, cmuProgram: p }))}
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
-                      form.cmuProgram === p ? "bg-white text-[#14102a]" : "bg-white/10 hover:bg-white/20",
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+              <CmuProgramPicker value={form.cmuProgram} onChange={(cmuProgram) => setForm((f) => ({ ...f, cmuProgram }))} />
             </div>
           )}
         </div>
@@ -165,8 +154,9 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
         >
           <Checkbox checked={consent} onCheckedChange={(c) => setConsent(c === true)} className="mt-0.5 size-5" />
           <span>
-            I get it: my name, phone and email will be visible to <strong>other guests at this party</strong> in this
-            private directory, so people can actually find me. Nothing is public.
+            I get it: my profile and quiz results are visible to other guests. My phone and email are visible to{" "}
+            <strong>{contactVisibility === "organizers" ? "organizers only" : "organizers and other guests"}</strong>,
+            and organizers may contact me after the party about payments or lost items.
           </span>
         </label>
       )}
@@ -178,7 +168,7 @@ export function ProfileForm({ existing, onSaved, submitLabel }: Props) {
       )}
 
       <BigButton type="submit" disabled={busy}>
-        {busy ? "Saving…" : submitLabel ?? "Next: what are you down for? →"}
+        {busy ? "Saving…" : submitLabel ?? "Start the quiz →"}
       </BigButton>
     </form>
   );

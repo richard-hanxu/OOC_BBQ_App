@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Profile", "Activities", "Quiz", "Reveal"];
+const STEPS = ["Profile", "Quiz", "Reveal"];
 
 export function OnboardingHeader({ step }: { step: number }) {
   return (

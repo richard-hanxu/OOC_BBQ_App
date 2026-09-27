@@ -1,7 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
+import type { AnnouncementInput, AnnouncementRecord, PollOption, VoteResult } from "../announcements";
 import { isAvatarType, type AvatarType } from "../avatars";
 import type { QuestionId } from "../questions";
-import { isActivityId, type ActivityId, type Answers, type Participant, type ProfileInput } from "../types";
+import { type Answers, type Participant, type ProfileInput } from "../types";
 import type { CreateParticipantInput, Store } from "./types";
 
 interface ParticipantRow {
@@ -11,6 +13,7 @@ interface ParticipantRow {
   last_name: string;
   phone: string;
   email: string;
+  contact_visibility: "guests" | "organizers";
   undergraduate_university: string | null;
   graduate_university: string | null;
   cmu_program: string | null;
@@ -19,10 +22,9 @@ interface ParticipantRow {
   is_seed: boolean;
   created_at: string;
   answers?: { question_id: string; normalized_value: number; display_value: string }[];
-  participant_activities?: { activity_id: string; is_interested: boolean }[];
 }
 
-const SELECT = "*, answers(question_id, normalized_value, display_value), participant_activities(activity_id, is_interested)";
+const SELECT = "*, answers(question_id, normalized_value, display_value)";
 
 function rowToParticipant(r: ParticipantRow): Participant {
   const answers: Answers = {};
@@ -36,6 +38,7 @@ function rowToParticipant(r: ParticipantRow): Participant {
     lastName: r.last_name,
     phone: r.phone,
     email: r.email,
+    contactVisibility: r.contact_visibility ?? "guests",
     undergraduateUniversity: r.undergraduate_university,
     graduateUniversity: r.graduate_university,
     cmuProgram: r.cmu_program,
@@ -43,9 +46,6 @@ function rowToParticipant(r: ParticipantRow): Participant {
     quizCompletedAt: r.quiz_completed_at,
     isSeed: r.is_seed,
     createdAt: r.created_at,
-    activities: (r.participant_activities ?? [])
-      .filter((a) => a.is_interested && isActivityId(a.activity_id))
-      .map((a) => a.activity_id as ActivityId),
     answers,
   };
 }
@@ -56,6 +56,7 @@ function profilePatchToRow(patch: Partial<ProfileInput>) {
   if (patch.lastName !== undefined) row.last_name = patch.lastName;
   if (patch.phone !== undefined) row.phone = patch.phone;
   if (patch.email !== undefined) row.email = patch.email;
+  if (patch.contactVisibility !== undefined) row.contact_visibility = patch.contactVisibility;
   if (patch.undergraduateUniversity !== undefined) row.undergraduate_university = patch.undergraduateUniversity ?? null;
   if (patch.graduateUniversity !== undefined) row.graduate_university = patch.graduateUniversity ?? null;
   if (patch.cmuProgram !== undefined) row.cmu_program = patch.cmuProgram ?? null;
@@ -74,6 +75,38 @@ export class SupabaseStore implements Store {
     this.client = createClient(url, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+  }
+
+  async listAnnouncements(): Promise<AnnouncementRecord[]> {
+    const { data, error } = await this.client.from("announcements")
+      .select("id,title,body,created_at,closed,options,announcement_votes(participant_id,option_id)")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((row) => ({
+      id: row.id, title: row.title, body: row.body, createdAt: row.created_at, closed: row.closed,
+      options: row.options as PollOption[],
+      votes: row.announcement_votes.map((vote: { participant_id: string; option_id: string }) => ({ participantId: vote.participant_id, optionId: vote.option_id })),
+    }));
+  }
+
+  async createAnnouncement(input: AnnouncementInput): Promise<AnnouncementRecord> {
+    const options = input.options.map((label) => ({ id: randomUUID(), label }));
+    const { data, error } = await this.client.from("announcements").insert({ title: input.title, body: input.body, options })
+      .select("id,title,body,created_at,closed").single();
+    if (error) throw error;
+    return { id: data.id, title: data.title, body: data.body, createdAt: data.created_at, closed: data.closed, options, votes: [] };
+  }
+
+  async closeAnnouncement(id: string) {
+    const { data, error } = await this.client.from("announcements").update({ closed: true }).eq("id", id).select("id");
+    if (error) throw error;
+    return Boolean(data?.length);
+  }
+
+  async vote(announcementId: string, participantId: string, optionId: string): Promise<VoteResult> {
+    const { data, error } = await this.client.rpc("cast_announcement_vote", { p_announcement_id: announcementId, p_participant_id: participantId, p_option_id: optionId });
+    if (error) throw error;
+    return data as VoteResult;
   }
 
   private async fetchOne(column: string, value: string): Promise<Participant | null> {
@@ -118,6 +151,7 @@ export class SupabaseStore implements Store {
         last_name: input.lastName,
         phone: input.phone,
         email: input.email,
+        contact_visibility: input.contactVisibility ?? "guests",
         undergraduate_university: input.undergraduateUniversity ?? null,
         graduate_university: input.graduateUniversity ?? null,
         cmu_program: input.cmuProgram ?? null,
@@ -129,7 +163,6 @@ export class SupabaseStore implements Store {
       .single();
     if (error) throw error;
     const id = (data as { id: string }).id;
-    if (input.activities?.length) await this.writeActivities(id, input.activities);
     if (input.answers && Object.keys(input.answers).length) await this.writeAnswers(id, input.answers);
     const created = await this.getParticipant(id);
     if (!created) throw new Error("participant vanished after insert");
@@ -145,18 +178,6 @@ export class SupabaseStore implements Store {
     return this.getParticipant(id);
   }
 
-  private async writeActivities(id: string, activities: ActivityId[]) {
-    const del = await this.client.from("participant_activities").delete().eq("participant_id", id);
-    if (del.error) throw del.error;
-    const unique = [...new Set(activities)];
-    if (unique.length) {
-      const ins = await this.client
-        .from("participant_activities")
-        .insert(unique.map((activity_id) => ({ participant_id: id, activity_id, is_interested: true })));
-      if (ins.error) throw ins.error;
-    }
-  }
-
   private async writeAnswers(id: string, answers: Answers) {
     const rows = Object.entries(answers).map(([question_id, a]) => ({
       participant_id: id,
@@ -166,11 +187,6 @@ export class SupabaseStore implements Store {
     }));
     const { error } = await this.client.from("answers").upsert(rows, { onConflict: "participant_id,question_id" });
     if (error) throw error;
-  }
-
-  async setActivities(id: string, activities: ActivityId[]) {
-    await this.writeActivities(id, activities);
-    return this.getParticipant(id);
   }
 
   async saveAnswers(id: string, answers: Answers, avatarType: AvatarType) {

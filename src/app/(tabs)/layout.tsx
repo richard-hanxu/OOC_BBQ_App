@@ -11,8 +11,8 @@ export default async function TabsLayout({ children }: LayoutProps<"/">) {
   if (!me.quizCompletedAt) redirect("/quiz");
 
   const store = await getStore();
-  const participants = (await store.listParticipants()).map(toPublic);
-  const initial = { me: toPublic(me), participants, fetchedAt: new Date().toISOString() };
+  const participants = (await store.listParticipants()).map((p) => toPublic(p, { viewerId: me.id }));
+  const initial = { me: toPublic(me, { viewerId: me.id }), participants, fetchedAt: new Date().toISOString() };
 
   return (
     <PartyProvider initial={initial}>

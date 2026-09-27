@@ -17,8 +17,8 @@ const display = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: {
-    default: "Pool Party Personality",
-    template: "%s · Pool Party Personality",
+    default: "OOC BBQ",
+    template: "%s · OOC BBQ",
   },
   description: "Private party game. Judge ridiculous situations, get your party type, find who you agree with.",
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },

@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { AvatarArt } from "@/components/avatar-art";
+import { AvatarSummary } from "@/components/avatar-summary";
 import { percentColor } from "@/components/participant-card";
 import { MarkerTrack } from "@/components/party-slider";
 import { useParty } from "@/components/party-provider";
 import { Card, CountUp, EmptyState, SectionTitle, Skeleton } from "@/components/ui-bits";
 import { AVATARS } from "@/lib/avatars";
 import { alignmentVibe, closenessCaption, compare, type QuestionComparison } from "@/lib/compatibility";
-import { ACTIVITY_BY_ID, fullName, schoolLine } from "@/lib/types";
+import { fullName, schoolLine } from "@/lib/types";
 
 export default function PersonPage() {
   const { id } = useParams<{ id: string }>();
@@ -68,7 +68,8 @@ export default function PersonPage() {
       <Back />
 
       <header className="flex flex-col items-center text-center">
-        <AvatarArt type={person.avatarType} size={120} />
+        <AvatarSummary type={person.avatarType} name={fullName(person)} size={120} />
+        {person.avatarType && <p className="mt-2 text-xs text-muted-foreground">Tap the avatar to learn what it means</p>}
         <h1 className="mt-3 text-3xl font-extrabold leading-tight">{fullName(person)}</h1>
         {meta && (
           <div
@@ -95,23 +96,8 @@ export default function PersonPage() {
 
       <section className="grid grid-cols-1 gap-3">
         <Card>
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Down for</div>
-          {person.activities.length ? (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {person.activities.map((a) => (
-                <Link key={a} href={`/activities/${a}`} className="rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold">
-                  {ACTIVITY_BY_ID[a].emoji} {ACTIVITY_BY_ID[a].shortLabel}
-                  {me.activities.includes(a) && <span className="ml-1 text-lime">· you too</span>}
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-1 text-sm text-muted-foreground">Nothing yet. Convince them.</div>
-          )}
-        </Card>
-        <Card>
           <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Contact</div>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          {person.phone && person.email ? <div className="mt-2 grid grid-cols-2 gap-2">
             <a href={`sms:${person.phone.replace(/[^\d+]/g, "")}`} className="glass rounded-2xl p-3 active:scale-[0.98]">
               <div className="text-xs text-muted-foreground">Phone</div>
               <div className="truncate text-sm font-bold">{person.phone}</div>
@@ -120,7 +106,7 @@ export default function PersonPage() {
               <div className="text-xs text-muted-foreground">Email</div>
               <div className="truncate text-sm font-bold">{person.email}</div>
             </a>
-          </div>
+          </div> : <p className="mt-2 text-sm text-muted-foreground">🔒 Contact details are shared with organizers only.</p>}
         </Card>
       </section>
 
@@ -175,7 +161,7 @@ export default function PersonPage() {
           </section>
 
           <details className="glass rounded-3xl p-4">
-            <summary className="cursor-pointer text-sm font-bold">All 14 answers side by side</summary>
+            <summary className="cursor-pointer text-sm font-bold">All {cmp.answered} shared answers side by side</summary>
             <div className="mt-3 space-y-3">
               {cmp.all.map((c) => (
                 <CompareRow key={c.question.id} c={c} name={person.firstName} compact />

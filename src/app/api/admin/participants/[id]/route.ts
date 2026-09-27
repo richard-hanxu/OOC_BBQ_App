@@ -20,5 +20,5 @@ export async function POST(_req: Request, ctx: Ctx) {
   const store = await getStore();
   const updated = await store.resetQuiz(id);
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ participant: toPublic(updated) });
+  return NextResponse.json({ participant: toPublic(updated, { organizer: true }) });
 }

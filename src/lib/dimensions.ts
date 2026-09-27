@@ -45,7 +45,7 @@ export function stddev(xs: number[]) {
 }
 
 /**
- * Lightweight, non-scientific party dimensions derived from the 14 sliders.
+ * Lightweight, non-scientific party dimensions derived from the quiz questions.
  * Every dimension is on a 0–100 scale. Deterministic.
  */
 export function computeDimensions(a: AnswerMap): Dimensions {
@@ -56,7 +56,6 @@ export function computeDimensions(a: AnswerMap): Dimensions {
   const intervention = weighted([
     [get(a, "aux"), 1],
     [get(a, "honesty"), 1],
-    [get(a, "drink_pressure"), 1],
   ]);
 
   const chaosRaw = weighted([
@@ -72,12 +71,10 @@ export function computeDimensions(a: AnswerMap): Dimensions {
     [get(a, "aux"), 0.3],
     [get(a, "honesty"), 0.3],
     [inv(get(a, "irish_exit")), 0.25],
-    [get(a, "drink_pressure"), 0.15],
   ]);
 
   const conscientiousness = weighted([
     [get(a, "floor_money"), 0.3],
-    [get(a, "drink_pressure"), 0.2],
     [get(a, "move_help"), 0.25],
     [inv(get(a, "irish_exit")), 0.1],
     [inv(get(a, "fry")), 0.075],
@@ -87,17 +84,13 @@ export function computeDimensions(a: AnswerMap): Dimensions {
   const loyalty = weighted([
     [get(a, "move_help"), 0.5],
     [get(a, "honesty"), 0.25],
-    [get(a, "drink_pressure"), 0.25],
   ]);
 
   const techDelegation = mean([get(a, "ai"), get(a, "robot")]);
   const luxury = get(a, "assistant_pay");
   const independencePrice = mean([get(a, "assistant_salary"), get(a, "phone_price")]);
 
-  const boundaryRespect = weighted([
-    [get(a, "drink_pressure"), 0.7],
-    [inv(get(a, "fry")), 0.3],
-  ]);
+  const boundaryRespect = inv(get(a, "fry"));
 
   const minorNormConcern = weighted([
     [inv(get(a, "fry")), 1],
@@ -120,7 +113,7 @@ export function computeDimensions(a: AnswerMap): Dimensions {
 
   const lowStakesOpinions =
     (mean(
-      (["fry", "aux", "irish_exit", "revenge", "floor_money"] as QuestionId[]).map((id) =>
+      (["fry", "aux", "irish_exit", "revenge", "floor_money", "vacation_destination"] as QuestionId[]).map((id) =>
         Math.abs(get(a, id) - 50),
       ),
     ) /

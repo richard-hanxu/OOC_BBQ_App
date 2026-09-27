@@ -12,13 +12,13 @@ import { isCmu, schoolLine } from "../types";
 const uniform = (v: number): AnswerMap => Object.fromEntries(QUESTIONS.map((q) => [q.id, v])) as AnswerMap;
 
 describe("questions", () => {
-  it("has exactly 14 slider questions, all with 5 descriptors", () => {
-    expect(QUESTIONS).toHaveLength(14);
+  it("has exactly 16 questions, all with 5 descriptors", () => {
+    expect(QUESTIONS).toHaveLength(16);
     for (const q of QUESTIONS) {
       expect(q.descriptors).toHaveLength(5);
       expect(q.partyCaptions).toHaveLength(5);
       expect(q.moods).toHaveLength(5);
-      expect(["continuous_slider", "money_slider"]).toContain(q.type);
+      expect(["continuous_slider", "money_slider", "binary"]).toContain(q.type);
       if (q.type === "money_slider") expect(q.stops!.length).toBeGreaterThanOrEqual(9);
     }
   });
@@ -58,6 +58,15 @@ describe("money sliders", () => {
 });
 
 describe("avatar assignment", () => {
+  it("does not infer morality or social behavior from vacation destination", () => {
+    const newYork = computeDimensions({ ...uniform(50), vacation_destination: 0 });
+    const california = computeDimensions({ ...uniform(50), vacation_destination: 100 });
+    const neutral = computeDimensions(uniform(50));
+    for (const key of ["boundaryRespect", "conscientiousness", "loyalty", "intervention", "socialEnergy"] as const) {
+      expect(newYork[key]).toBe(neutral[key]);
+      expect(california[key]).toBe(neutral[key]);
+    }
+  });
   it("is deterministic", () => {
     for (const p of SEED_PEOPLE) {
       const a = assignAvatar(p.answers);
@@ -114,17 +123,41 @@ describe("avatar assignment", () => {
 
 describe("compatibility", () => {
   const names = { a: { name: "You", you: true }, b: { name: "Alex", you: false } };
+
+  it("includes history and lyrics in comparisons without inventing answers for older guests", () => {
+    const older = answersFromMap(uniform(50));
+    delete older.history_sharing;
+    delete older.song_lyrics;
+    const current = answersFromMap({ ...uniform(50), history_sharing: 100, song_lyrics: 100 });
+    const legacyComparison = compare(older, current, names);
+    expect(legacyComparison.answered).toBe(14);
+    expect(legacyComparison.percent).toBe(100);
+    const comparison = compare(answersFromMap({ ...uniform(50), history_sharing: 0, song_lyrics: 0 }), current, names);
+    expect(comparison.answered).toBe(16);
+    expect(comparison.starters.join(" ")).toContain("ChatGPT history");
+    expect(comparison.starters.join(" ")).toContain("Karaoke duet");
+  });
+
+  it("does not reinterpret old drink-etiquette responses as vacation answers", () => {
+    const legacy = { ...answersFromMap(uniform(50)), drink_pressure: { normalized: 0, display: "0" } };
+    delete legacy.vacation_destination;
+    const current = answersFromMap({ ...uniform(50), vacation_destination: 100 });
+    const comparison = compare(legacy, current, names);
+    expect(comparison.answered).toBe(15);
+    expect(comparison.percent).toBe(100);
+    expect(comparison.all.some((item) => item.question.id === "vacation_destination")).toBe(false);
+  });
   it("is 100% for identical answers and 0% for opposite extremes", () => {
     const a = answersFromMap(uniform(50));
     expect(compatibilityPercent(a, a)).toBe(100);
     expect(compatibilityPercent(answersFromMap(uniform(0)), answersFromMap(uniform(100)))).toBe(0);
   });
 
-  it("averages similarity across all 14 questions and compares money by position", () => {
+  it("averages similarity across all 16 questions and compares money by position", () => {
     const a = answersFromMap({ ...uniform(50), assistant_pay: 0 });
     const b = answersFromMap({ ...uniform(50), assistant_pay: 100 });
-    // 13 identical + one fully opposite: (13/14)*100 ≈ 92.86 → 93
-    expect(compatibilityPercent(a, b)).toBe(93);
+    // 15 identical + one fully opposite: (15/16)*100 = 93.75 → 94
+    expect(compatibilityPercent(a, b)).toBe(94);
     const c = compare(a, b, names);
     expect(c.moneyGaps[0].question.id).toBe("assistant_pay");
     expect(c.moneyGaps[0].diff).toBe(100);
@@ -163,14 +196,13 @@ describe("party stats", () => {
     quizCompletedAt: s.quizCompletedAt ?? null,
     isSeed: true,
     createdAt: new Date().toISOString(),
-    activities: s.activities ?? [],
     answers: s.answers ?? {},
   }));
 
   it("computes medians, histograms, and highlights", () => {
     const stats = computePartyStats(people);
     expect(stats.completed).toBe(people.length);
-    expect(stats.questions).toHaveLength(14);
+    expect(stats.questions).toHaveLength(16);
     for (const q of stats.questions) {
       expect(q.histogram.reduce((a, b) => a + b, 0)).toBe(people.length);
       expect(q.median).toBeGreaterThanOrEqual(0);

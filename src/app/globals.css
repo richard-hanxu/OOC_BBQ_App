@@ -133,6 +133,101 @@
   }
 }
 
+/* Decorative welcome-page glitter: three independently moving depth layers. */
+.glitter-background {
+  --glitter-x: 0px;
+  --glitter-y: 0px;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  background:
+    radial-gradient(ellipse at 15% 25%, #ff5fa214, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, #a78bfa1c, transparent 55%);
+  /* Keep the strongest glitter at the edges, away from the welcome copy. */
+  mask-image: radial-gradient(ellipse at center, #0005 0%, #000b 50%, #000 85%);
+}
+.glitter-layer {
+  position: absolute;
+  inset: -100px -40px;
+  transform: translate3d(calc(var(--glitter-x) * var(--depth)), calc(var(--glitter-y) * var(--depth)), 0);
+  transition: transform 700ms ease-out;
+}
+.glitter-drift {
+  position: absolute;
+  inset: 0;
+  animation: glitter-drift 30s ease-in-out infinite alternate;
+}
+.glitter-speck {
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 7px currentColor;
+  opacity: 0.35;
+  animation: glitter-glow 7s ease-in-out infinite;
+}
+.glitter-star {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+}
+@keyframes glitter-glow {
+  0%, 100% { opacity: 0.18; transform: scale(0.8); }
+  50% { opacity: 0.7; transform: scale(1.15); }
+}
+@keyframes glitter-drift {
+  from { transform: translate3d(-5px, 8px, 0); }
+  to { transform: translate3d(9px, -14px, 0); }
+}
+.glitter-background[data-paused="true"] .glitter-drift,
+.glitter-background[data-paused="true"] .glitter-speck,
+.glitter-background[data-paused="true"] .party-shooting-emoji {
+  animation-play-state: paused;
+}
+.party-shooting-emoji {
+  position: absolute;
+  left: -5rem;
+  display: block;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  line-height: 1;
+  opacity: 0;
+  /* Only the first 3.8 seconds of each cycle are visible. */
+  animation: party-emoji-flyby 42s linear infinite both;
+}
+.party-shooting-emoji::before {
+  content: "";
+  position: absolute;
+  top: 45%;
+  right: 75%;
+  width: clamp(3rem, 9vw, 7rem);
+  height: 3px;
+  border-radius: 100%;
+  background: linear-gradient(90deg, transparent, var(--trail-color));
+  box-shadow: 0 0 9px var(--trail-color);
+  transform: rotate(-12deg);
+  transform-origin: right center;
+  opacity: 0.6;
+}
+.party-shooting-emoji-glyph {
+  position: relative;
+  display: block;
+  transform: rotate(-15deg);
+}
+@keyframes party-emoji-flyby {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); }
+  1% { opacity: 0.75; }
+  7% { opacity: 0.75; }
+  9%, 100% { opacity: 0; transform: translate3d(calc(100vw + 10rem), -18vh, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glitter-layer { transform: none; transition: none; }
+  .glitter-drift, .glitter-speck { animation: none; }
+  .party-shooting-emoji { display: none; animation: none; }
+}
+
 /* ---------- The big party slider (native range, heavily styled) ---------- */
 .party-slider {
   --fill: 50%;

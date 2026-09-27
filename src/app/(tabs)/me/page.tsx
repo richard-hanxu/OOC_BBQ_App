@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { AvatarArt } from "@/components/avatar-art";
+import { AvatarSummary } from "@/components/avatar-summary";
 import { ParticipantCard } from "@/components/participant-card";
 import { useParty } from "@/components/party-provider";
 import { Card, CountUp, EmptyState, SectionTitle, Skeleton } from "@/components/ui-bits";
@@ -10,7 +10,7 @@ import { AVATARS, funnyObservations } from "@/lib/avatars";
 import { compare, compatibilityPercent } from "@/lib/compatibility";
 import type { AnswerMap } from "@/lib/dimensions";
 import { QUESTIONS, type Subject } from "@/lib/questions";
-import { ACTIVITY_BY_ID, fullName, schoolLine, type PublicParticipant } from "@/lib/types";
+import { fullName, schoolLine, type PublicParticipant } from "@/lib/types";
 
 export default function MePage() {
   const { data, loading } = useParty();
@@ -60,12 +60,7 @@ export default function MePage() {
       if (a) map[q.id] = a.normalized;
     }
 
-    const activityMatches = me.activities.map((id) => ({
-      id,
-      count: data.participants.filter((p) => p.id !== me.id && p.activities.includes(id)).length,
-    }));
-
-    return { me, others, best, worst, biggest, money, observations: funnyObservations(map), activityMatches };
+    return { me, others, best, worst, biggest, money, observations: funnyObservations(map) };
   }, [data]);
 
   if (loading || !derived) {
@@ -79,7 +74,7 @@ export default function MePage() {
     );
   }
 
-  const { me, others, best, worst, biggest, money, observations, activityMatches } = derived;
+  const { me, others, best, worst, biggest, money, observations } = derived;
   const meta = me.avatarType ? AVATARS[me.avatarType] : null;
 
   return (
@@ -99,8 +94,9 @@ export default function MePage() {
         <Card className="relative overflow-hidden text-center" style={{ background: `linear-gradient(160deg, ${meta.from}22, ${meta.to}22)` }}>
           <div className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Party Type</div>
           <div className="mt-3 flex justify-center">
-            <AvatarArt type={me.avatarType} size={140} />
+            <AvatarSummary type={me.avatarType} isMe size={140} />
           </div>
+          <p className="mt-2 text-xs text-muted-foreground">Tap your avatar to learn what it means</p>
           <h2
             className="mt-4 text-3xl font-extrabold leading-none"
             style={{ background: `linear-gradient(90deg, ${meta.from}, ${meta.to})`, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
@@ -134,12 +130,10 @@ export default function MePage() {
           {biggest && (
             <section>
               <SectionTitle eyebrow="Biggest disagreement">Go argue about this</SectionTitle>
-              <Link href={`/people/${biggest.p.id}`} className="block">
                 <Card className="flex items-center gap-3">
-                  <AvatarArt type={biggest.p.avatarType} size={44} />
-                  <p className="text-sm font-semibold leading-snug">{biggest.text}</p>
+                  <AvatarSummary type={biggest.p.avatarType} name={fullName(biggest.p)} size={44} />
+                  <Link href={`/people/${biggest.p.id}`} className="text-sm font-semibold leading-snug">{biggest.text}</Link>
                 </Card>
-              </Link>
             </section>
           )}
 
@@ -158,42 +152,6 @@ export default function MePage() {
           )}
         </>
       )}
-
-      <section>
-        <SectionTitle eyebrow="Activity matches">Who&apos;s down</SectionTitle>
-        {activityMatches.length === 0 ? (
-          <EmptyState
-            emoji="🤷"
-            title="You're not down for anything yet"
-            body="Pick something and see who else is in."
-            action={
-              <Link href="/activities" className="grad-cool block rounded-2xl py-3 text-center font-bold text-[#14102a]">
-                Pick activities
-              </Link>
-            }
-          />
-        ) : (
-          <div className="space-y-2">
-            {activityMatches.map(({ id, count }) => {
-              const a = ACTIVITY_BY_ID[id];
-              return (
-                <Link key={id} href={`/activities/${id}`} className="glass flex items-center gap-3 rounded-2xl p-3 active:scale-[0.98]">
-                  <span className="text-3xl" aria-hidden="true">
-                    {a.emoji}
-                  </span>
-                  <div className="flex-1">
-                    <div className="font-extrabold">{a.label}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {count === 0 ? "Nobody else yet. Recruit someone." : `${count} other ${count === 1 ? "person is" : "people are"} down for ${a.shortLabel.toLowerCase()}.`}
-                    </div>
-                  </div>
-                  <span className="text-muted-foreground">→</span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
 
       {others.length > 0 && (
         <section>
@@ -218,11 +176,13 @@ export default function MePage() {
 
 function MatchTile({ label, p, percent, tone }: { label: string; p: PublicParticipant; percent: number; tone: "lime" | "hot" }) {
   return (
-    <Link href={`/people/${p.id}`} className="glass flex flex-col items-center rounded-3xl p-4 text-center active:scale-[0.98]">
+    <div className="glass flex flex-col items-center rounded-3xl p-4 text-center">
       <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{label}</div>
-      <AvatarArt type={p.avatarType} size={64} className="mt-2" />
-      <div className="mt-2 truncate text-sm font-extrabold">{fullName(p)}</div>
-      <CountUp value={percent} suffix="%" className={`text-3xl font-extrabold leading-none ${tone === "lime" ? "text-lime" : "text-hot"}`} />
-    </Link>
+      <AvatarSummary type={p.avatarType} name={fullName(p)} size={64} className="mt-2" />
+      <Link href={`/people/${p.id}`} className="block w-full rounded-xl">
+        <div className="mt-2 truncate text-sm font-extrabold">{fullName(p)}</div>
+        <CountUp value={percent} suffix="%" className={`text-3xl font-extrabold leading-none ${tone === "lime" ? "text-lime" : "text-hot"}`} />
+      </Link>
+    </div>
   );
 }

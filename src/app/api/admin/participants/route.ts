@@ -6,7 +6,7 @@ import { toPublic } from "@/lib/types";
 export async function GET() {
   if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const store = await getStore();
-  const participants = (await store.listParticipants()).map(toPublic);
+  const participants = (await store.listParticipants()).map((p) => toPublic(p, { organizer: true }));
   return NextResponse.json({ participants, storeKind: storeKind() }, { headers: { "Cache-Control": "no-store" } });
 }
 

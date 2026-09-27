@@ -7,13 +7,13 @@ import { currentParticipant } from "@/lib/server/auth";
 import { getStore } from "@/lib/store";
 import { toPublic, type Answers } from "@/lib/types";
 
-/** Batched write of all 14 answers. Computes and stores the avatar server-side. */
+/** Batched write of all quiz answers. Computes and stores the avatar server-side. */
 export async function POST(req: Request) {
   const me = await currentParticipant();
   if (!me) return NextResponse.json({ error: "Not joined" }, { status: 401 });
   if (me.quizCompletedAt) {
     return NextResponse.json(
-      { error: "You already finished the quiz. Ask the organizer to reset it.", participant: toPublic(me) },
+      { error: "You already finished the quiz. Ask the organizer to reset it.", participant: toPublic(me, { viewerId: me.id }) },
       { status: 409 },
     );
   }
@@ -24,13 +24,16 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const raw = body.answers ?? {};
+  const raw = body?.answers ?? {};
   const map: AnswerMap = {};
   const answers: Answers = {};
   for (const q of QUESTIONS) {
     const v = raw[q.id];
     if (typeof v !== "number" || !Number.isFinite(v)) {
       return NextResponse.json({ error: `Missing answer for question ${q.id}` }, { status: 400 });
+    }
+    if (q.type === "binary" && v !== 0 && v !== 100) {
+      return NextResponse.json({ error: `Choose ${q.leftLabel} or ${q.rightLabel}.` }, { status: 400 });
     }
     const normalized = Math.round(clamp(v, 0, 100) * 100) / 100;
     map[q.id as QuestionId] = normalized;
@@ -41,7 +44,7 @@ export async function POST(req: Request) {
   const store = await getStore();
   const updated = await store.saveAnswers(me.id, answers, result.type);
   return NextResponse.json({
-    participant: toPublic(updated ?? me),
+    participant: toPublic(updated ?? me, { viewerId: me.id }),
     avatar: result.type,
     observations: result.observations,
   });

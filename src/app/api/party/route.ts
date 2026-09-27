@@ -5,7 +5,7 @@ import { toPublic } from "@/lib/types";
 
 /**
  * The whole private directory in one request: the viewer plus every guest
- * (with answers and activities) so compatibility can be computed on-device
+ * (with answers) so compatibility can be computed on-device
  * without a round trip per card. Only joined guests can read it.
  */
 export async function GET() {
@@ -15,8 +15,8 @@ export async function GET() {
   const all = await store.listParticipants();
   return NextResponse.json(
     {
-      me: toPublic(me),
-      participants: all.map(toPublic),
+      me: toPublic(me, { viewerId: me.id }),
+      participants: all.map((p) => toPublic(p, { viewerId: me.id })),
       fetchedAt: new Date().toISOString(),
     },
     { headers: { "Cache-Control": "private, no-store" } },

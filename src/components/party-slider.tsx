@@ -34,6 +34,25 @@ export function PartySlider({ question, value, onChange, onCommit, className }: 
   const isMoney = question.type === "money_slider";
   const caption = descriptorFor(question, value);
 
+  if (question.type === "binary") {
+    return (
+      <fieldset className={cn("space-y-4", className)}>
+        <legend className="sr-only">{question.text}</legend>
+        <div className="grid grid-cols-2 gap-3">
+          {[{ value: 0, label: question.leftLabel, emoji: "🗽" }, { value: 100, label: question.rightLabel, emoji: "🌴" }].map((option) => (
+            <label key={option.value} className={cn("relative flex min-h-44 cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border p-4 text-center", value === option.value ? "border-sky bg-sky/15" : "glass")}>
+              <input type="radio" name={id} value={option.value} checked={value === option.value} className="peer sr-only" onChange={() => { onChange(option.value); onCommit?.(option.value); }} />
+              <span aria-hidden="true" className="text-5xl">{option.emoji}</span>
+              <span className="text-lg font-extrabold">{option.label}</span>
+              <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-3xl peer-focus-visible:ring-3 peer-focus-visible:ring-ring" />
+            </label>
+          ))}
+        </div>
+        <p aria-live="polite" className="text-center text-sm text-muted-foreground">{caption}</p>
+      </fieldset>
+    );
+  }
+
   return (
     <div className={cn("flex flex-col gap-5", className)}>
       <div key={idx} className="flex min-h-[112px] flex-col items-center justify-center text-center animate-pop">
@@ -94,7 +113,7 @@ export function MarkerTrack({
   className,
   histogram,
 }: {
-  a: number;
+  a?: number;
   b?: number;
   labelA?: string;
   labelB?: string;
@@ -112,13 +131,13 @@ export function MarkerTrack({
         </div>
       )}
       <div className="h-3 rounded-full bg-white/10" />
-      {b != null && (
+      {a != null && b != null && (
         <div
           className="absolute top-6 h-3 rounded-full bg-white/25"
           style={{ left: `${Math.min(a, b)}%`, width: `${Math.abs(a - b)}%` }}
         />
       )}
-      <Marker value={a} label={labelA} color="#ff5fa2" side="top" />
+      {a != null && <Marker value={a} label={labelA} color="#ff5fa2" side="top" />}
       {b != null && <Marker value={b} label={labelB ?? ""} color="#22d3ee" side="bottom" />}
     </div>
   );

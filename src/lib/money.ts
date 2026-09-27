@@ -47,6 +47,7 @@ export function moneyDisplay(q: Question, normalized: number, compact = false): 
 
 /** The string stored as display_value for any question type. */
 export function displayValueFor(q: Question, normalized: number): string {
+  if (q.type === "binary") return normalized === 0 ? q.leftLabel : normalized === 100 ? q.rightLabel : "Even split";
   return q.type === "money_slider" ? moneyDisplay(q, normalized) : String(Math.round(normalized));
 }
 

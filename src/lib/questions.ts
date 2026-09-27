@@ -1,4 +1,4 @@
-export type QuestionType = "continuous_slider" | "money_slider";
+export type QuestionType = "continuous_slider" | "money_slider" | "binary";
 
 export type QuestionId =
   | "floor_money"
@@ -9,12 +9,14 @@ export type QuestionId =
   | "fry"
   | "ai"
   | "irish_exit"
-  | "drink_pressure"
+  | "vacation_destination"
   | "smart_button"
   | "move_help"
   | "phone_price"
   | "robot"
-  | "revenge";
+  | "revenge"
+  | "history_sharing"
+  | "song_lyrics";
 
 /** A person referenced inside a generated sentence. */
 export interface Subject {
@@ -313,35 +315,35 @@ export const QUESTIONS: Question[] = [
       `${hi.name} ${v(hi, "believes", "believe")} Irish exits are an art form. ${lo.name} ${v(lo, "appears", "appear")} personally offended.`,
   },
   {
-    id: "drink_pressure",
-    category: "Etiquette",
-    shortTitle: "Pushing drinks on someone",
-    text: "Someone at a party keeps insisting another guest should have a drink after they've already declined. How unacceptable is that?",
-    leftLabel: "Not a big deal",
-    rightLabel: "Completely unacceptable",
-    type: "continuous_slider",
+    id: "vacation_destination",
+    category: "Travel",
+    shortTitle: "New York or California",
+    text: "You get a week off and a free trip. Where are you going: New York or California?",
+    leftLabel: "New York",
+    rightLabel: "California",
+    type: "binary",
     descriptors: [
-      "Eh. People are just being friendly.",
-      "Annoying, but I'd let it slide.",
-      "One \"they said no\" from across the room.",
-      "I'm stepping in. Politely. Once.",
-      "Completely unacceptable. No means no.",
+      "New York. Save me a slice.",
+      "New York. Save me a slice.",
+      "Two destinations. One ticket. Pick a side.",
+      "California. Road-trip playlist ready.",
+      "California. Road-trip playlist ready.",
     ],
     partyCaptions: [
-      "Peer pressure is oddly tolerated here.",
-      "People will let it slide, then complain later.",
-      "Expect a pointed \"they said no\" from across the room.",
-      "This party backs people up when they decline.",
-      "No means no here. Everybody's watching.",
+      "This crowd is booking flights to New York.",
+      "New York has the edge in the group chat.",
+      "The room is split between New York and California.",
+      "California has the edge in the group chat.",
+      "This crowd is California-bound.",
     ],
-    moods: ["🤷", "😑", "🗣️", "✋", "🛡️"],
+    moods: ["🗽", "🗽", "🧳", "🌴", "🌴"],
     observations: {
-      low: "Weirdly relaxed about people pushing drinks.",
-      high: "Enforces \"no means no\" across the whole party.",
+      low: "Already planning the New York food tour.",
+      high: "Has mentally booked a California road trip.",
     },
-    avatarWeights: { conscientiousness: 0.2, boundaryRespect: 0.7, loyalty: 0.25, intervention: 0.33 },
+    avatarWeights: { lowStakesOpinions: 1 / 6 },
     conversationTemplate: (hi, lo) =>
-      `${hi.name} ${v(hi, "thinks", "think")} pushing drinks on someone is completely unacceptable. ${lo.name} ${v(lo, "calls", "call")} it "being friendly."`,
+      `${hi.name} ${v(hi, "is", "are")} California-bound. ${lo.name} ${v(lo, "is", "are")} booking New York. Good luck choosing a trip together.`,
   },
   {
     id: "smart_button",
@@ -500,12 +502,71 @@ export const QUESTIONS: Question[] = [
     conversationTemplate: (hi, lo) =>
       `One of you believes petty revenge is justice. (It's ${hi.you ? "you" : hi.name}.) ${lo.name} ${v(lo, "would", "would")} forgive and forget.`,
   },
+  {
+    id: "history_sharing",
+    category: "Digital life",
+    shortTitle: "YouTube or ChatGPT history",
+    text: "Hypothetically, which would you feel more comfortable showing your friends: your YouTube watch history or your ChatGPT query history?",
+    leftLabel: "YouTube watch history",
+    rightLabel: "ChatGPT query history",
+    type: "continuous_slider",
+    descriptors: [
+      "YouTube, easily. The prompts stay private.",
+      "I'd rather explain my recommendations.",
+      "Equally comfortable. Or equally uncomfortable.",
+      "I'd rather explain my prompts.",
+      "ChatGPT, easily. The watch history stays private.",
+    ],
+    partyCaptions: [
+      "YouTube histories are winning this hypothetical show-and-tell.",
+      "This crowd would rather explain its recommendations.",
+      "The room is torn about which history to share.",
+      "This crowd would rather explain its prompts.",
+      "ChatGPT histories are winning this hypothetical show-and-tell.",
+    ],
+    moods: ["📺", "🍿", "🤔", "💬", "🤖"],
+    observations: {
+      low: "Would sooner reveal the YouTube rabbit holes than the ChatGPT prompts.",
+      high: "Would sooner reveal the ChatGPT prompts than the YouTube rabbit holes.",
+    },
+    avatarWeights: { extremity: 1 / 12, variance: 1 / 12 },
+    conversationTemplate: (hi, lo) =>
+      `${hi.name} would rather share ${hi.you ? "your" : "their"} ChatGPT history. ${lo.name} would rather share ${lo.you ? "your" : "their"} YouTube history. Which one needs more explaining?`,
+  },
+  {
+    id: "song_lyrics",
+    category: "Music",
+    shortTitle: "Knowing the lyrics",
+    text: "When your favorite songs come on, how well do you know the lyrics?",
+    leftLabel: "Just vibes and made-up words",
+    rightLabel: "Every lyric, even the ad-libs",
+    type: "continuous_slider",
+    descriptors: [
+      "The melody is right. The words are original.",
+      "A few words, a lot of confidence.",
+      "The chorus is covered. The verses? Maybe.",
+      "Most verses, choruses, and dramatic pauses.",
+      "Every lyric. Every ad-lib. No subtitles needed.",
+    ],
+    partyCaptions: [
+      "Original lyrics only. The artist would be surprised.",
+      "This crowd sings with more confidence than accuracy.",
+      "The chorus is safe. The verses are a group project.",
+      "Most of this room could carry karaoke night.",
+      "This party is a walking lyrics database.",
+    ],
+    moods: ["🎶", "😅", "🎵", "🎤", "🌟"],
+    observations: {
+      low: "Knows the vibe. Invents the lyrics.",
+      high: "Comes with built-in lyrics and all the ad-libs.",
+    },
+    avatarWeights: { extremity: 1 / 12, variance: 1 / 12 },
+    conversationTemplate: (hi, lo) =>
+      `${hi.name} ${v(hi, "knows", "know")} every lyric. ${lo.name} ${v(lo, "supplies", "supply")} the vibes and improvised words. Karaoke duet?`,
+  },
 ];
 
-export const QUESTION_COUNT = 14;
-if (QUESTIONS.length !== QUESTION_COUNT) {
-  throw new Error(`Expected exactly ${QUESTION_COUNT} questions, got ${QUESTIONS.length}`);
-}
+export const QUESTION_COUNT = QUESTIONS.length;
 
 export const QUESTION_BY_ID: Record<QuestionId, Question> = Object.fromEntries(
   QUESTIONS.map((q) => [q.id, q]),

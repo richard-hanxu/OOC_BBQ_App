@@ -1,8 +1,8 @@
 import { AVATARS, ALL_AVATAR_TYPES, type AvatarType } from "./avatars";
 import { stddev } from "./dimensions";
-import { moneyDisplay } from "./money";
+import { displayValueFor } from "./money";
 import { QUESTIONS, partyCaptionFor, type Question } from "./questions";
-import { ACTIVITIES, type ActivityId, type PublicParticipant } from "./types";
+import { type PublicParticipant } from "./types";
 
 export interface QuestionStats {
   question: Question;
@@ -26,7 +26,6 @@ export interface PartyStats {
   strongestConsensus: QuestionStats | null;
   biggestMoneyGap: QuestionStats | null;
   species: { type: AvatarType; count: number; percent: number }[];
-  activities: { id: ActivityId; count: number }[];
 }
 
 function median(xs: number[]) {
@@ -45,7 +44,7 @@ export function questionStats(q: Question, people: PublicParticipant[]): Questio
   for (const v of values) histogram[Math.min(9, Math.floor(v / 10))]++;
   const min = values.length ? Math.min(...values) : 0;
   const max = values.length ? Math.max(...values) : 100;
-  const display = (v: number) => (q.type === "money_slider" ? moneyDisplay(q, v) : String(Math.round(v)));
+  const display = (v: number) => displayValueFor(q, v);
   return {
     question: q,
     count: values.length,
@@ -83,10 +82,6 @@ export function computePartyStats(people: PublicParticipant[]): PartyStats {
     strongestConsensus: [...nonMoney].sort((a, b) => a.spread - b.spread)[0] ?? null,
     biggestMoneyGap: [...money].sort(bySpreadDesc)[0] ?? null,
     species,
-    activities: ACTIVITIES.map((a) => ({
-      id: a.id,
-      count: people.filter((p) => p.activities.includes(a.id)).length,
-    })),
   };
 }
 

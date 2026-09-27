@@ -5,7 +5,8 @@ import { useCallback, useState } from "react";
 import { PartySlider } from "@/components/party-slider";
 import { BigButton } from "@/components/ui-bits";
 import type { AvatarType } from "@/lib/avatars";
-import { QUESTIONS, QUESTION_COUNT, type QuestionId } from "@/lib/questions";
+import { displayValueFor } from "@/lib/money";
+import { QUESTIONS, QUESTION_COUNT, QUESTION_BY_ID, descriptorFor, type QuestionId } from "@/lib/questions";
 import { cn } from "@/lib/utils";
 
 const DRAFT_KEY = "pp_quiz_draft_v1";
@@ -15,14 +16,26 @@ type Draft = { index: number; answers: Partial<Record<QuestionId, number>>; touc
 function readDraft(): Draft | null {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
-    return raw ? (JSON.parse(raw) as Draft) : null;
+    const draft = raw ? (JSON.parse(raw) as Draft) : null;
+    if (draft?.answers && ("drink_pressure" in draft.answers || "vacation_season" in draft.answers)) {
+      // A response to the retired question is not a vacation preference.
+      const { drink_pressure: _retired, vacation_season: _season, ...answers } = draft.answers as Draft["answers"] & { drink_pressure?: unknown; vacation_season?: unknown };
+      void _retired; void _season;
+      return {
+        ...draft,
+        answers,
+        index: Math.min(draft.index, QUESTIONS.findIndex((q) => q.id === "vacation_destination")),
+        touched: draft.touched.filter((id) => id in QUESTION_BY_ID),
+      };
+    }
+    return draft;
   } catch {
     return null;
   }
 }
 
 /**
- * All 14 sliders. Slider interaction is purely local; the draft is written to
+ * All quiz questions. Slider interaction is purely local; the draft is written to
  * localStorage on release/advance so a refresh keeps progress, and the whole
  * set is sent to the server in one request at the end.
  */
@@ -34,6 +47,8 @@ export function Quiz({ firstName }: { firstName: string }) {
   const [answers, setAnswers] = useState<Partial<Record<QuestionId, number>>>(() => draft?.answers ?? {});
   const [touched, setTouched] = useState<QuestionId[]>(() => draft?.touched ?? []);
   const [submitting, setSubmitting] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewAvailable, setReviewAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dir, setDir] = useState<1 | -1>(1);
 
@@ -96,14 +111,17 @@ export function Quiz({ firstName }: { firstName: string }) {
   }
 
   const go = (delta: 1 | -1) => {
+    if (delta === 1 && q.type === "binary" && value !== 0 && value !== 100) return;
     const nextTouched = touched.includes(q.id) ? touched : [...touched, q.id];
     const nextAnswers = { ...answers, [q.id]: value };
     setTouched(nextTouched);
     setAnswers(nextAnswers);
     const nextIndex = index + delta;
-    if (nextIndex >= QUESTION_COUNT) {
+    if (nextIndex >= QUESTION_COUNT || (reviewAvailable && delta === 1)) {
       persist({ answers: nextAnswers, touched: nextTouched, index });
-      void finish(nextAnswers);
+      setReviewing(true);
+      setReviewAvailable(true);
+      window.scrollTo({ top: 0 });
       return;
     }
     setDir(delta);
@@ -113,6 +131,46 @@ export function Quiz({ firstName }: { firstName: string }) {
   };
 
   const isLast = index === QUESTION_COUNT - 1;
+
+  if (reviewing) {
+    return (
+      <main className="mx-auto w-full max-w-md px-5 pb-8 pt-6">
+        <h1 className="text-3xl font-extrabold">One last look, {firstName}</h1>
+        <p className="mt-3 rounded-2xl border border-sun/40 bg-sun/10 p-4 text-sm font-semibold">
+          Your answers are permanent once you submit. Review all {QUESTION_COUNT} below, and tap Edit to change any answer before submitting.
+        </p>
+        <ol className="my-5 space-y-3">
+          {QUESTIONS.map((question, i) => {
+            const answer = answers[question.id] ?? 50;
+            return (
+              <li key={question.id} className="glass flex items-start gap-3 rounded-2xl p-4">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-bold">{i + 1}. {question.text}</h2>
+                  <p className="mt-2 text-sm font-semibold text-sky">{displayValueFor(question, answer)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{descriptorFor(question, answer)}</p>
+                </div>
+                <button type="button" disabled={submitting} aria-label={`Edit answer ${i + 1}`}
+                  className="min-h-11 shrink-0 rounded-full bg-white/10 px-3 text-sm font-bold disabled:opacity-50"
+                  onClick={() => {
+                    setIndex(i);
+                    setDir(-1);
+                    setReviewing(false);
+                    persist({ index: i });
+                    window.scrollTo({ top: 0 });
+                  }}>
+                  Edit
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+        {error && <p role="alert" className="mb-4 rounded-xl bg-destructive/15 p-3 text-sm font-semibold text-destructive">{error}</p>}
+        <BigButton variant="lime" disabled={submitting} onClick={() => void finish(answers)}>
+          {submitting ? "Revealing your party type…" : "Submit permanently & reveal →"}
+        </BigButton>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-6 pt-5">
@@ -164,10 +222,13 @@ export function Quiz({ firstName }: { firstName: string }) {
       )}
 
       <div className="mt-6 safe-bottom">
-        <BigButton onClick={() => go(1)} disabled={submitting} variant={isLast ? "lime" : "hot"}>
-          {submitting ? "Calculating your party type…" : isLast ? `Reveal my party type, ${firstName} →` : isTouched ? "Next →" : "Right in the middle, next →"}
+        <p className="mb-3 text-center text-xs text-muted-foreground">
+          You can go back and edit. Answers become permanent only when you submit after reviewing.
+        </p>
+        <BigButton onClick={() => go(1)} disabled={submitting || (q.type === "binary" && value !== 0 && value !== 100)} variant={isLast ? "lime" : "hot"}>
+          {reviewAvailable ? "Back to review →" : isLast ? "Review my answers →" : q.type === "binary" || isTouched ? "Next →" : "Right in the middle, next →"}
         </BigButton>
-        {!isTouched && !isLast && (
+        {!isTouched && !isLast && q.type !== "binary" && (
           <p className="mt-2 text-center text-xs text-muted-foreground">Drag the slider, or leave it at 50 if you really are that neutral.</p>
         )}
       </div>

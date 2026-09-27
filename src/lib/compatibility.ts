@@ -1,4 +1,4 @@
-import { moneyDisplay } from "./money";
+import { displayValueFor } from "./money";
 import { QUESTIONS, descriptorFor, type Question, type Subject } from "./questions";
 import type { Answers, PublicParticipant } from "./types";
 
@@ -39,8 +39,8 @@ function compareQuestion(q: Question, a: Answers, b: Answers): QuestionCompariso
     question: q,
     a: av,
     b: bv,
-    aDisplay: q.type === "money_slider" ? moneyDisplay(q, av) : String(Math.round(av)),
-    bDisplay: q.type === "money_slider" ? moneyDisplay(q, bv) : String(Math.round(bv)),
+    aDisplay: displayValueFor(q, av),
+    bDisplay: displayValueFor(q, bv),
     aCaption: descriptorFor(q, av),
     bCaption: descriptorFor(q, bv),
     diff,

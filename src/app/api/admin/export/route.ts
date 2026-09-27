@@ -2,7 +2,7 @@ import { AVATARS } from "@/lib/avatars";
 import { QUESTIONS } from "@/lib/questions";
 import { isAdmin } from "@/lib/server/auth";
 import { getStore } from "@/lib/store";
-import { ACTIVITIES } from "@/lib/types";
+import { universityFor } from "@/lib/types";
 
 function csvCell(v: unknown) {
   const s = v == null ? "" : String(v);
@@ -20,14 +20,13 @@ export async function GET() {
     "last_name",
     "phone",
     "email",
-    "undergraduate_university",
-    "graduate_university",
+    "contact_visibility",
+    "university",
     "cmu_program",
     "avatar",
     "quiz_completed_at",
     "is_seed",
     "created_at",
-    ...ACTIVITIES.map((a) => `activity_${a.id}`),
     ...QUESTIONS.flatMap((q) => [`${q.id}_value`, `${q.id}_display`]),
   ];
 
@@ -37,14 +36,13 @@ export async function GET() {
     p.lastName,
     p.phone,
     p.email,
-    p.undergraduateUniversity,
-    p.graduateUniversity,
+    p.contactVisibility ?? "guests",
+    universityFor(p),
     p.cmuProgram,
     p.avatarType ? AVATARS[p.avatarType].name : "",
     p.quizCompletedAt,
     p.isSeed ? "yes" : "no",
     p.createdAt,
-    ...ACTIVITIES.map((a) => (p.activities.includes(a.id) ? "yes" : "no")),
     ...QUESTIONS.flatMap((q) => [p.answers[q.id]?.normalized ?? "", p.answers[q.id]?.display ?? ""]),
   ]);
 

@@ -39,11 +39,17 @@ export function validateProfile(body: unknown, { partial = false } = {}): Partia
   }
   if (b.undergraduateUniversity !== undefined) out.undergraduateUniversity = opt(b.undergraduateUniversity);
   if (b.graduateUniversity !== undefined) out.graduateUniversity = opt(b.graduateUniversity);
-  if (b.cmuProgram !== undefined) out.cmuProgram = opt(b.cmuProgram, 80);
+  if (b.cmuProgram !== undefined) out.cmuProgram = opt(b.cmuProgram, 240);
+  if (b.contactVisibility !== undefined) {
+    if (b.contactVisibility !== "guests" && b.contactVisibility !== "organizers") {
+      throw new ValidationError("Choose who can see your contact info.", "contactVisibility");
+    }
+    out.contactVisibility = b.contactVisibility;
+  }
 
   if (!partial) {
     if (b.consent !== true) {
-      throw new ValidationError("Please confirm you understand your contact info is visible to other guests.", "consent");
+      throw new ValidationError("Please confirm the contact and directory notice.", "consent");
     }
     if (!isCmu(out.undergraduateUniversity) && !isCmu(out.graduateUniversity)) out.cmuProgram = null;
   }

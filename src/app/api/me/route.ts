@@ -7,7 +7,7 @@ import { isCmu, toPublic } from "@/lib/types";
 export async function GET() {
   const me = await currentParticipant();
   if (!me) return NextResponse.json({ participant: null }, { status: 401 });
-  return NextResponse.json({ participant: toPublic(me) });
+  return NextResponse.json({ participant: toPublic(me, { viewerId: me.id }) });
 }
 
 export async function PATCH(req: Request) {
@@ -27,7 +27,7 @@ export async function PATCH(req: Request) {
     if (!isCmu(undergrad) && !isCmu(grad)) patch.cmuProgram = null;
     const store = await getStore();
     const updated = await store.updateProfile(me.id, patch);
-    return NextResponse.json({ participant: toPublic(updated ?? me) });
+    return NextResponse.json({ participant: toPublic(updated ?? me, { viewerId: me.id }) });
   } catch (e) {
     if (e instanceof ValidationError) return NextResponse.json({ error: e.message, field: e.field }, { status: 400 });
     throw e;

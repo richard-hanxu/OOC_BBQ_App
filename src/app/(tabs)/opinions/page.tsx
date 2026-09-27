@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { AvatarArt } from "@/components/avatar-art";
+import { AvatarSummary } from "@/components/avatar-summary";
 import { MarkerTrack } from "@/components/party-slider";
 import { useParty } from "@/components/party-provider";
 import { Card, EmptyState, SectionTitle, Skeleton } from "@/components/ui-bits";
@@ -53,7 +53,7 @@ export default function OpinionsPage() {
                   const meta = AVATARS[s.type];
                   return (
                     <li key={s.type} className="flex items-center gap-3">
-                      <AvatarArt type={s.type} size={36} />
+                      <AvatarSummary type={s.type} size={36} />
                       <div className="flex-1">
                         <div className="flex justify-between text-sm font-bold">
                           <span>
@@ -78,7 +78,7 @@ export default function OpinionsPage() {
           </section>
 
           <section>
-            <SectionTitle eyebrow="All 14 sliders">The full record</SectionTitle>
+            <SectionTitle eyebrow="All questions">The full record</SectionTitle>
             <div className="space-y-3">
               {stats.questions.map((s) => (
                 <QuestionCard key={s.question.id} s={s} mine={myAnswers[s.question.id]?.normalized} />
@@ -110,11 +110,19 @@ function Highlight({ eyebrow, s, emoji, money }: { eyebrow: string; s: QuestionS
 
 function QuestionCard({ s, mine }: { s: QuestionStats; mine?: number }) {
   const isMoney = s.question.type === "money_slider";
+  if (s.count === 0) {
+    return (
+      <Card>
+        <div className="text-base font-extrabold">{s.question.shortTitle}</div>
+        <p className="mt-2 text-sm text-muted-foreground">No one has answered this question yet.</p>
+      </Card>
+    );
+  }
   return (
     <Card>
       <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{s.question.category}</div>
       <div className="text-base font-extrabold leading-tight">{s.question.shortTitle}</div>
-      <MarkerTrack a={mine ?? 50} b={s.median} labelA={mine != null ? "You" : ""} labelB="Party" histogram={s.histogram} className="mt-2" />
+      <MarkerTrack a={mine} b={s.median} labelA="You" labelB="Party" histogram={s.histogram} className="mt-2" />
       <div className="flex justify-between text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
         <span className="max-w-[45%]">{s.question.leftLabel}</span>
         <span className="max-w-[45%] text-right">{s.question.rightLabel}</span>
@@ -122,7 +130,7 @@ function QuestionCard({ s, mine }: { s: QuestionStats; mine?: number }) {
       <div className="mt-3 flex items-baseline justify-between">
         <div>
           <div className="text-xs text-muted-foreground">Party median</div>
-          <div className="text-2xl font-extrabold tabular leading-none">{isMoney ? s.medianDisplay : Math.round(s.median)}</div>
+          <div className="text-2xl font-extrabold tabular leading-none">{isMoney || s.question.type === "binary" ? s.medianDisplay : Math.round(s.median)}</div>
         </div>
         <div className="max-w-[60%] text-right text-sm font-semibold">{s.caption}</div>
       </div>

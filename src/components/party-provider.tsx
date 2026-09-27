@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { compatibilityPercent } from "@/lib/compatibility";
-import type { ActivityId, ProfileInput, PublicParticipant } from "@/lib/types";
+import type { ProfileInput, PublicParticipant } from "@/lib/types";
 
 export interface PartyData {
   me: PublicParticipant;
@@ -15,8 +15,6 @@ interface PartyContextValue {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-  /** Optimistic; rolls back on failure. */
-  setMyActivities: (activities: ActivityId[]) => Promise<void>;
   updateProfile: (patch: Partial<ProfileInput>) => Promise<{ ok: boolean; error?: string; field?: string }>;
   /** Memoized compatibility (0–100) between me and another guest, or null if either lacks answers. */
   percentWith: (id: string) => number | null;
@@ -71,30 +69,6 @@ export function PartyProvider({ children, initial }: { children: ReactNode; init
     };
   }, [refresh]);
 
-  const setMyActivities = useCallback(
-    async (activities: ActivityId[]) => {
-      let previous: PartyData | null = null;
-      setData((d) => {
-        previous = d;
-        return d ? patchMe(d, { activities }) : d;
-      });
-      try {
-        const res = await fetch("/api/me/activities", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ activities }),
-        });
-        if (!res.ok) throw new Error("save failed");
-        const json = (await res.json()) as { participant: PublicParticipant };
-        setData((d) => (d ? patchMe(d, json.participant) : d));
-      } catch {
-        if (previous) setData(previous);
-        throw new Error("Couldn't save. Check your connection.");
-      }
-    },
-    [],
-  );
-
   const updateProfile = useCallback(async (patch: Partial<ProfileInput>) => {
     const res = await fetch("/api/me", {
       method: "PATCH",
@@ -122,8 +96,8 @@ export function PartyProvider({ children, initial }: { children: ReactNode; init
   const percentWith = useCallback((id: string) => percentMap.get(id) ?? null, [percentMap]);
 
   const value = useMemo<PartyContextValue>(
-    () => ({ data, loading, error, refresh, setMyActivities, updateProfile, percentWith }),
-    [data, loading, error, refresh, setMyActivities, updateProfile, percentWith],
+    () => ({ data, loading, error, refresh, updateProfile, percentWith }),
+    [data, loading, error, refresh, updateProfile, percentWith],
   );
 
   return <PartyContext.Provider value={value}>{children}</PartyContext.Provider>;

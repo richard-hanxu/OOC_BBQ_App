@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AvatarArt } from "@/components/avatar-art";
+import { AvatarSummary } from "@/components/avatar-summary";
 import { BigLink, Confetti } from "@/components/ui-bits";
 import { ALL_AVATAR_TYPES, AVATARS, type AvatarType } from "@/lib/avatars";
 
@@ -48,8 +49,9 @@ export function Reveal({ avatar, observations, firstName }: { avatar: AvatarType
         ) : (
           <>
             <div className="animate-reveal">
-              <AvatarArt type={avatar} size={220} className="shadow-[0_30px_80px_-20px_rgba(255,255,255,0.35)]" />
+              <AvatarSummary type={avatar} isMe size={220} className="shadow-[0_30px_80px_-20px_rgba(255,255,255,0.35)]" />
             </div>
+            <p className="mt-3 text-xs text-muted-foreground">Tap your avatar to learn what it means</p>
             <div className="mt-6 text-5xl animate-pop" style={{ animationDelay: "150ms" }} aria-hidden="true">
               {meta.emoji}
             </div>
