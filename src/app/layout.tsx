@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     default: "OOC BBQ",
     template: "%s · OOC BBQ",
   },
-  description: "Private party game. Judge ridiculous situations, get your party type, find who you agree with.",
+  description: "Welcome to the BBQ!.",
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   applicationName: "Pool Party Personality",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Party" },
