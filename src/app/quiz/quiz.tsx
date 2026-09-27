@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { PartySlider } from "@/components/party-slider";
 import { BigButton } from "@/components/ui-bits";
 import type { AvatarType } from "@/lib/avatars";
@@ -61,20 +61,16 @@ export function Quiz({ firstName }: { firstName: string }) {
     persist({ answers: nextAnswers, touched: nextTouched });
   };
 
-  const allAnswers = useMemo(() => {
-    const out: Record<string, number> = {};
-    for (const question of QUESTIONS) out[question.id] = answers[question.id] ?? 50;
-    return out;
-  }, [answers]);
-
-  async function finish() {
+  async function finish(finalAnswers: Partial<Record<QuestionId, number>>) {
+    const payload: Record<string, number> = {};
+    for (const question of QUESTIONS) payload[question.id] = finalAnswers[question.id] ?? 50;
     setSubmitting(true);
     setError(null);
     try {
       const res = await fetch("/api/me/answers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: allAnswers }),
+        body: JSON.stringify({ answers: payload }),
       });
       const json = (await res.json().catch(() => ({}))) as {
         avatar?: AvatarType;
@@ -107,7 +103,7 @@ export function Quiz({ firstName }: { firstName: string }) {
     const nextIndex = index + delta;
     if (nextIndex >= QUESTION_COUNT) {
       persist({ answers: nextAnswers, touched: nextTouched, index });
-      void finish();
+      void finish(nextAnswers);
       return;
     }
     setDir(delta);
