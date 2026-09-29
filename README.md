@@ -1,6 +1,6 @@
 # DISCLAIMER: Made using Origin Cursor and Claude Codex
 
-I made this app the night before a BBQ me and roommates hosted as a fun way for attendees to break the ice and do at the beginning. Users' contact info (name and email) were stored in a Supabase server that we could use to easily message users after the event to coordinate splitting the cost. I also planned an "admin" console that let me and my roommates send announcements and kick/reset users. The whole app was done using a few prompts from Cursor and Codex, and overall I'm very pleased with the outcome. Some screenshots of the app are shown below.
+I made this app the night before a BBQ me and roommates hosted as a fun way for attendees to break the ice and do at the beginning. Users' contact info (name and email) were stored in a Supabase server that we could use to easily message users after the event to coordinate splitting the cost. I also planned an "admin" console that let me and my roommates send announcements and kick/reset users. The whole app was done using a few prompts from Cursor and Codex, and overall I'm very pleased with the outcome. Some screenshots of the app are shown below. The site is (likely) still up, you can view the app [here](https://oocbbqapp.vercel.app/).
 
 <img width="400"  alt="image" src="https://github.com/user-attachments/assets/72e095b9-581a-48f3-9fe2-ac0de0a82c22" />
 <img width="400"  alt="image" src="https://github.com/user-attachments/assets/2e7b2f04-413d-46ac-8010-a7d44ef72507" />
