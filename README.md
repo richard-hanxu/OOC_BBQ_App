@@ -2,6 +2,8 @@
 
 The night before me and my roommate were planning to host a BBQ, I had the idea to make this app as a fun way for attendees to break the ice and create discussion points with each other. The whole app was done using a few prompts from Cursor and Codex, and overall I'm very pleased with the outcome. Some screenshots of the app are shown below. The site is (likely) still up and you can view the app [here](https://oocbbqapp.vercel.app/).
 
+The app did have a practical benefit outside of pure entertainment; attendees' contact info (name and email) were stored in a Supabase server that we could use to easily message attendees after the event to coordinate splitting the cost. The app also had an "admin" console that let me and my roommates send announcements and kick/reset users.
+
 <img width="400"  alt="image" src="https://github.com/user-attachments/assets/72e095b9-581a-48f3-9fe2-ac0de0a82c22" />
 <img width="400"  alt="image" src="https://github.com/user-attachments/assets/2e7b2f04-413d-46ac-8010-a7d44ef72507" />
 <img width="400"  alt="image" src="https://github.com/user-attachments/assets/0140d3a6-045c-4e87-97ed-a2d6ebea2ea7" />
