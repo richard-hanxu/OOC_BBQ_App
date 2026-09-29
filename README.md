@@ -1,6 +1,20 @@
+# DISCLAIMER: Made using Origin Cursor and Claude Codex
+
+I made this app the night before a BBQ me and roommates hosted as a fun way for attendees to break the ice and do at the beginning. Users' contact info (name and email) were stored in a Supabase server that we could use to easily message users after the event to coordinate splitting the cost. I also planned an "admin" console that let me and my roommates send announcements and kick/reset users. The whole app was done using a few prompts from Cursor and Codex, and overall I'm very pleased with the outcome. Some screenshots of the app are shown below.
+
+<img width="400"  alt="image" src="https://github.com/user-attachments/assets/72e095b9-581a-48f3-9fe2-ac0de0a82c22" />
+<img width="400"  alt="image" src="https://github.com/user-attachments/assets/2e7b2f04-413d-46ac-8010-a7d44ef72507" />
+<img width="400"  alt="image" src="https://github.com/user-attachments/assets/0140d3a6-045c-4e87-97ed-a2d6ebea2ea7" />
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/eeec192e-ba97-409f-9f1f-6f21c090c1de" />
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/926be715-cd94-4bb8-8c02-41d57c91ab5a" />
+
+\
+**Front End:** React, Next.js, Tailwind
+**Back End:** Next.js, Supabase
+
 # Pool Party Personality
 
-A mobile-first party game for a university house party. Guests scan a QR code, fill in a short profile, answer **15 personality questions (14 sliders and a New York/California choice), plus a bonus BBQ grocery-cost guess** about fries, robots, Irish exits and questionable money decisions, review their answers, and get an automatically assigned **party type** (Ghost, Life of the Party, Chameleon, Drinking Machine, Game Goblin, Side Quest, Kitchen NPC). Then they can see who they align with and who they'd fight over the aux with. Clicking a guest's avatar explains their party type.
+A mobile-first party game for a university house party. Guests scan a QR code, fill in a short profile, answer **15 personality questions, plus a bonus BBQ grocery-cost guess** about fries, robots, Irish exits and questionable money decisions, review their answers, and get an automatically assigned **party type** (Ghost, Life of the Party, Chameleon, Drinking Machine, Game Goblin, Side Quest, Kitchen NPC). Then they can see who they align with and who they'd fight over the aux with. Clicking a guest's avatar explains their party type.
 
 Everything is a private directory for guests only: `noindex`, `robots.txt` disallow, and guest data endpoints require a participant cookie; organizer endpoints require an admin session.
 
